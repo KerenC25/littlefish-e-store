@@ -19,7 +19,14 @@ export const UserMenu = () => {
 
   if (!user) {
     return (
-      <Button component={RouterLink} to="/login" color="inherit" variant="outlined" size="small">
+      <Button
+        component={RouterLink}
+        to="/login"
+        color="inherit"
+        variant="outlined"
+        size="small"
+        sx={{ borderColor: 'rgba(142, 227, 201, 0.5)', '&:hover': { borderColor: '#8EE3C9', bgcolor: 'rgba(142, 227, 201, 0.08)' } }}
+      >
         Sign in
       </Button>
     );

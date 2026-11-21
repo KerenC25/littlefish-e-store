@@ -80,8 +80,8 @@ export const ProductDetailPage = () => {
         <Box>
           <Box
             sx={{
-              bgcolor: 'grey.100',
-              borderRadius: 3,
+              background: 'radial-gradient(circle at 50% 35%, #FFFFFF 0%, #E6F6F0 75%)',
+              borderRadius: '24px',
               aspectRatio: '1 / 1',
               display: 'grid',
               placeItems: 'center',
@@ -108,7 +108,7 @@ export const ProductDetailPage = () => {
                     p: 0,
                     width: 72,
                     height: 72,
-                    borderRadius: 2,
+                    borderRadius: '14px',
                     overflow: 'hidden',
                     cursor: 'pointer',
                     bgcolor: 'grey.100',
@@ -188,7 +188,7 @@ export const ProductDetailPage = () => {
           <Divider sx={{ mb: 2 }} />
           <Box component="ul" sx={{ listStyle: 'none', p: 0, m: 0, display: 'grid', gap: 2 }}>
             {product.reviews.map((review, i) => (
-              <Box component="li" key={`${review.reviewerName}-${i}`} sx={{ p: 2, borderRadius: 2, bgcolor: 'background.paper' }}>
+              <Box component="li" key={`${review.reviewerName}-${i}`} sx={{ p: 2.5, borderRadius: '20px', bgcolor: 'background.paper', border: 1, borderColor: 'divider' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Rating value={review.rating} size="small" readOnly aria-hidden />
                   <Box component="span" sx={visuallyHidden}>

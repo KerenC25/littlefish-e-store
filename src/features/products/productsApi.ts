@@ -68,6 +68,16 @@ export const productsApi = api.injectEndpoints({
         ...(result?.ids ?? []).map((id) => ({ type: 'Product' as const, id })),
       ],
     }),
+    /**
+     * The whole catalogue (limit=0), listing fields only. Shared by the brand rail, the hero
+     * stats and brand results, so it is fetched once and cached for 10 minutes.
+     */
+    getCatalogIndex: build.query<Product[], void>({
+      query: () => `/products?limit=0&select=${LIST_FIELDS}`,
+      transformResponse: (response: ApiProductPage) => response.products.map(toProduct),
+      providesTags: [{ type: 'Product', id: 'INDEX' }],
+      keepUnusedDataFor: 600,
+    }),
     getProduct: build.query<ProductDetail, number>({
       query: (id) => `/products/${id}`,
       transformResponse: (response: ApiProduct) => toProductDetail(response),
@@ -83,4 +93,10 @@ export const productsApi = api.injectEndpoints({
   }),
 });
 
-export const { useGetProductsQuery, useGetProductQuery, useGetCategoriesQuery, usePrefetch } = productsApi;
+export const {
+  useGetProductsQuery,
+  useGetCatalogIndexQuery,
+  useGetProductQuery,
+  useGetCategoriesQuery,
+  usePrefetch,
+} = productsApi;

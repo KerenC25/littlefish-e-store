@@ -80,5 +80,7 @@ export interface ProductsQueryArgs {
   pageSize: number;
   sort: SortOption;
   category: string | null;
+  /** Exact brand name. Filtered client-side (see brands.ts). */
+  brand: string | null;
   search: string;
 }

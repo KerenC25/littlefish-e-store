@@ -40,7 +40,7 @@ export const CartLineItem = memo(function CartLineItem({ productId }: { productI
         alt=""
         width={64}
         height={64}
-        sx={{ gridArea: 'img', objectFit: 'cover', borderRadius: 2, bgcolor: 'grey.100' }}
+        sx={{ gridArea: 'img', objectFit: 'cover', borderRadius: '12px', bgcolor: '#E6F6F0' }}
       />
       <Typography id={titleId} fontWeight={600} sx={{ gridArea: 'title' }}>
         {item.title}

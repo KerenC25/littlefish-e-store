@@ -1,4 +1,5 @@
 import {
+  brandChanged,
   catalogReducer,
   categoryChanged,
   filtersReset,
@@ -28,6 +29,17 @@ describe('catalogSlice', () => {
     const searched = catalogReducer(withCategory, searchChanged('mascara'));
     expect(searched).toMatchObject({ search: 'mascara', category: null });
     expect(catalogReducer(searched, categoryChanged('furniture'))).toMatchObject({ search: '', category: 'furniture' });
+  });
+
+  it('makes brand exclusive with category and search', () => {
+    const withCategory = catalogReducer(onPage3, categoryChanged('beauty'));
+    const branded = catalogReducer(withCategory, brandChanged('Apple'));
+    expect(branded).toMatchObject({ brand: 'Apple', category: null, search: '', page: 1 });
+    expect(catalogReducer(branded, categoryChanged('furniture')).brand).toBeNull();
+    expect(catalogReducer(branded, searchChanged('phone')).brand).toBeNull();
+    // An empty search (clearing the box) leaves the brand alone.
+    expect(catalogReducer(branded, searchChanged('')).brand).toBe('Apple');
+    expect(selectHasActiveFilters({ catalog: branded })).toBe(true);
   });
 
   it('guards against invalid pages', () => {

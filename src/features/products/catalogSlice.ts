@@ -4,8 +4,11 @@ import type { ProductsQueryArgs, SortOption } from './types';
 
 /**
  * UI state that drives the products query. Keeping it in Redux (rather than local state)
- * lets the toolbar, grid, pagination and result summary stay in sync without prop drilling,
- * and makes "back to the same page/filters" free.
+ * lets the hero, brand rail, toolbar, grid, pagination and result summary stay in sync
+ * without prop drilling, and makes "back to the same page/filters" free.
+ *
+ * Search, category and brand are mutually exclusive: DummyJSON cannot combine search with
+ * category, and brand filtering is client-side over the full catalogue.
  */
 export type CatalogState = ProductsQueryArgs;
 
@@ -14,6 +17,7 @@ export const initialCatalogState: CatalogState = {
   pageSize: DEFAULT_PAGE_SIZE,
   sort: 'featured',
   category: null,
+  brand: null,
   search: '',
 };
 
@@ -34,12 +38,22 @@ const catalogSlice = createSlice({
     },
     categoryChanged(state, action: PayloadAction<string | null>) {
       state.category = action.payload;
-      state.search = ''; // API cannot combine category and search.
+      state.brand = null;
+      state.search = '';
+      state.page = 1;
+    },
+    brandChanged(state, action: PayloadAction<string | null>) {
+      state.brand = action.payload;
+      state.category = null;
+      state.search = '';
       state.page = 1;
     },
     searchChanged(state, action: PayloadAction<string>) {
       state.search = action.payload;
-      if (action.payload.trim()) state.category = null;
+      if (action.payload.trim()) {
+        state.category = null;
+        state.brand = null;
+      }
       state.page = 1;
     },
     filtersReset() {
@@ -48,25 +62,35 @@ const catalogSlice = createSlice({
   },
 });
 
-export const { pageChanged, pageSizeChanged, sortChanged, categoryChanged, searchChanged, filtersReset } =
-  catalogSlice.actions;
+export const {
+  pageChanged,
+  pageSizeChanged,
+  sortChanged,
+  categoryChanged,
+  brandChanged,
+  searchChanged,
+  filtersReset,
+} = catalogSlice.actions;
 export const catalogReducer = catalogSlice.reducer;
 
 const selectCatalog = (state: { catalog: CatalogState }) => state.catalog;
 
+export const selectActiveBrand = (state: { catalog: CatalogState }) => state.catalog.brand;
+
 /** Memoised so the query hook receives a referentially stable argument object. */
 export const selectProductsQueryArgs = createSelector(
   [selectCatalog],
-  ({ page, pageSize, sort, category, search }): ProductsQueryArgs => ({
+  ({ page, pageSize, sort, category, brand, search }): ProductsQueryArgs => ({
     page,
     pageSize,
     sort,
     category,
+    brand,
     search: search.trim(),
   }),
 );
 
 export const selectHasActiveFilters = createSelector(
   [selectCatalog],
-  (c) => c.category !== null || c.search.trim() !== '' || c.sort !== 'featured',
+  (c) => c.category !== null || c.brand !== null || c.search.trim() !== '' || c.sort !== 'featured',
 );

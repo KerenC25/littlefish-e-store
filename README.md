@@ -111,7 +111,7 @@ src/
 Pagination (`limit`/`skip`), sorting (`sortBy`/`order`), filtering (category, search), caching (per-argument cache entries, `keepUnusedDataFor`, tags, `refetchOnReconnect`), prefetching, and authenticated requests with transparent token refresh and retry.
 
 ### Testing
-**103 tests across 12 suites, covering 96.8% of lines and 83.6% of branches** (`npm run test:coverage`). The suites cover:
+**122 tests across 14 suites, covering 96.6% of lines and 85.3% of branches** (`npm run test:coverage`). The suites cover:
 - **Redux store:** reducers and selectors (`cartSlice`, `catalogSlice`), memoisation, and persistence through the real store and listener middleware, including tampered storage and storage that throws.
 - **Async actions:** RTK Query endpoints against a mocked `fetch` (normalisation, ZAR conversion, cache hits, per-page caching, error state). Also `baseQueryWithReauth` (401 → refresh → retry, failed refresh → logout and storage cleared) and the session-restore thunk.
 - **Component interactions (integration):** the real store, router, theme and contexts rendered together. Covers browsing, filtering, sorting, debounced search, add/increase/remove in the cart modal, focus returning after Escape, error/retry and empty states, the sign-in redirect and return, form validation with focus on the first invalid field, and successful, declined and 3-D Secure payments.
@@ -149,6 +149,38 @@ Pagination (`limit`/`skip`), sorting (`sortBy`/`order`), filtering (category, se
 Feature-sliced folders, a single composition root, dependency injection for side-effectful services (storage, payment gateway), pure functions for business rules (totals, validation, card checks, URL building) and thin components.
 
 ---
+
+## Brand and design
+
+**Palette.** The palette is taken from [littlefishapp.com](https://littlefishapp.com):
+
+| Token | Colour |
+| --- | --- |
+| Ink | `#002B2E` |
+| Void | `#000F10` |
+| Teal | `#008779` |
+| Deep teal | `#00646A` |
+| Mint | `#8EE3C9` |
+| Amber | `#FFA61A` |
+| Orange accent | `#FF4F0C` |
+
+The tokens live in [`src/app/theme.ts`](src/app/theme.ts), and every text pairing was checked for WCAG AA contrast. One example: teal `#008779` is only 4.4:1 against white, so white text sits on deep teal instead. Amber is the call-to-action colour, with dark `#2B1600` text on it.
+
+**Look and feel.**
+- A frosted ink header.
+- A dark hero with a gradient headline, slowly drifting glows and a swimming outline fish. Motion is disabled under `prefers-reduced-motion`, and the clipped-gradient text falls back to solid in Windows High Contrast.
+- Pill buttons, 20px cards, and badges for discounts and top-rated products.
+- An ink footer.
+- Inter throughout, as the brief requires. littlefish's own site uses Plus Jakarta Sans.
+
+**Voice.** "Small fish. Fast moves." is my own riff on littlefish's speed-over-size idea, retold as a South African shop.
+
+**Shop by brand.** A brand carousel similar to the ones on Takealot and Superbalist:
+- Wordmark tiles over a product photo, so no trademarked logos are used.
+- Scroll-snap, with arrow buttons on larger screens.
+- An **A–Z directory** dialog with search and letter jump links.
+
+DummyJSON has no brand filter, so the full catalogue (194 products, listing fields only) is fetched once and cached for 10 minutes. Brands, brand filtering, sorting and paging are then derived client-side by pure, unit-tested functions in [`src/features/products/brands.ts`](src/features/products/brands.ts). The same cached request feeds the hero stats. Brand, category and search are mutually exclusive, which the reducer enforces. If the catalogue request fails, the rail hides and the rest of the shop keeps working.
 
 ## Bonus tasks
 

@@ -13,7 +13,7 @@ export const ProductGridSkeleton = ({ count = 8 }: { count?: number }) => (
     }}
   >
     {Array.from({ length: count }, (_, i) => (
-      <Skeleton key={i} variant="rounded" height={CARD_HEIGHT} />
+      <Skeleton key={i} variant="rounded" height={CARD_HEIGHT} sx={{ borderRadius: '20px' }} />
     ))}
   </Box>
 );

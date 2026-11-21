@@ -38,7 +38,9 @@ export const AddToCartButton = memo(function AddToCartButton({
 
   return (
     <Button
+      // Amber is the brand's call-to-action colour; once in the cart it calms down to outlined teal.
       variant={inCart > 0 ? 'outlined' : 'contained'}
+      color={inCart > 0 ? 'primary' : 'secondary'}
       size={size}
       fullWidth={fullWidth}
       startIcon={<AddShoppingCartIcon aria-hidden />}

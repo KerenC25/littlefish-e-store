@@ -71,6 +71,12 @@ export const CatalogToolbar = memo(function CatalogToolbar() {
         gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '2fr 1fr 1fr 0.7fr auto' },
         alignItems: 'center',
         mb: 3,
+        p: { xs: 2, md: 2.5 },
+        pb: { xs: 0.5, md: 1 },
+        bgcolor: 'background.paper',
+        border: 1,
+        borderColor: 'divider',
+        borderRadius: '20px',
       }}
     >
       <TextField
