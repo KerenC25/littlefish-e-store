@@ -1,0 +1,46 @@
+import type { ApiProduct, ApiProductPage, Product } from '../features/products/types';
+import { toProduct } from '../features/products/mappers';
+
+export const apiProduct = (overrides: Partial<ApiProduct> = {}): ApiProduct => ({
+  id: 1,
+  title: 'Essence Mascara Lash Princess',
+  description: 'A popular mascara.',
+  category: 'beauty',
+  brand: 'Essence',
+  price: 10,
+  discountPercentage: 10,
+  rating: 4.5,
+  stock: 5,
+  thumbnail: 'https://cdn.example.test/1.webp',
+  images: ['https://cdn.example.test/1-a.webp'],
+  tags: ['beauty'],
+  reviews: [],
+  ...overrides,
+});
+
+export const product = (overrides: Partial<ApiProduct> = {}): Product => toProduct(apiProduct(overrides));
+
+export const productPage = (products: ApiProduct[], total = products.length): ApiProductPage => ({
+  products,
+  total,
+  skip: 0,
+  limit: products.length,
+});
+
+export const sampleProducts: ApiProduct[] = [
+  apiProduct({ id: 1, title: 'Rooibos Tea Tin', price: 10, stock: 20 }),
+  apiProduct({ id: 2, title: 'Braai Tongs', price: 25, stock: 3, brand: 'Weber' }),
+  apiProduct({ id: 3, title: 'Vetkoek Pan', price: 40, stock: 0 }),
+];
+
+export const loginResponse = {
+  id: 1,
+  username: 'emilys',
+  email: 'emily@example.test',
+  firstName: 'Emily',
+  lastName: 'Johnson',
+  image: '',
+  role: 'admin',
+  accessToken: 'access-1',
+  refreshToken: 'refresh-1',
+};

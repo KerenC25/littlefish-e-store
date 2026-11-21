@@ -1,0 +1,31 @@
+/** @type {import('jest').Config} */
+module.exports = {
+  testEnvironment: 'jsdom',
+  roots: ['<rootDir>/src'],
+  setupFiles: ['<rootDir>/src/test/polyfills.ts'],
+  setupFilesAfterEnv: ['<rootDir>/src/test/setupTests.ts'],
+  transform: {
+    '^.+\\.tsx?$': [
+      'ts-jest',
+      {
+        tsconfig: {
+          jsx: 'react-jsx',
+          target: 'ES2020',
+          lib: ['ES2020', 'DOM', 'DOM.Iterable'],
+          module: 'commonjs',
+          moduleResolution: 'node',
+          esModuleInterop: true,
+          isolatedModules: true,
+          strict: true,
+          skipLibCheck: true,
+          types: ['jest', '@testing-library/jest-dom'],
+        },
+        diagnostics: { ignoreCodes: ['TS151001'] },
+      },
+    ],
+  },
+  moduleNameMapper: {
+    '\\.(css|less|scss)$': 'identity-obj-proxy',
+  },
+  collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/main.tsx', '!src/test/**', '!src/**/*.d.ts'],
+};
