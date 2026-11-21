@@ -33,7 +33,7 @@ export const OrdersPage = () => {
           illustration="📦"
           title="No orders yet"
           description="Your order history is emptier than a Sandton parking lot on a public holiday. Let us fix that."
-          actionLabel="Start shopping"
+          actionLabel="Start fishing"
           onAction={() => navigate('/')}
         />
       ) : (

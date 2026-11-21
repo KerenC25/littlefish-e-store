@@ -1,6 +1,7 @@
 import { combineReducers, configureStore, createListenerMiddleware, isAnyOf } from '@reduxjs/toolkit';
 import { setupListeners } from '@reduxjs/toolkit/query';
 import { api } from '../services/api';
+import { geocodingApi } from '../services/geocodingApi';
 import { cartActions, cartReducer } from '../features/cart/cartSlice';
 import { loadCart, saveCart } from '../features/cart/cartPersistence';
 import { authReducer, credentialsReceived, loggedOut, tokensRefreshed } from '../features/auth/authSlice';
@@ -25,6 +26,7 @@ import {
 
 const rootReducer = combineReducers({
   [api.reducerPath]: api.reducer,
+  [geocodingApi.reducerPath]: geocodingApi.reducer,
   cart: cartReducer,
   coupon: couponReducer,
   orders: ordersReducer,
@@ -102,7 +104,7 @@ export const makeStore = ({
     middleware: (getDefault) =>
       getDefault({ thunk: { extraArgument: services } })
         .prepend(listener.middleware)
-        .concat(api.middleware),
+        .concat(api.middleware, geocodingApi.middleware),
   });
 
   // Enables refetchOnFocus / refetchOnReconnect behaviour.

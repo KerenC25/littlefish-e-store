@@ -111,7 +111,7 @@ src/
 Pagination (`limit`/`skip`), sorting (`sortBy`/`order`), filtering (category, search), caching (per-argument cache entries, `keepUnusedDataFor`, tags, `refetchOnReconnect`), prefetching, and authenticated requests with transparent token refresh and retry.
 
 ### Testing
-**176 tests across 18 suites, covering 97.0% of lines and 86.0% of branches** (`npm run test:coverage`). The suites cover:
+**183 tests across 19 suites, covering 97.1% of lines and 86.0% of branches** (`npm run test:coverage`). The suites cover:
 - **Redux store:** reducers and selectors (`cartSlice`, `catalogSlice`), memoisation, and persistence through the real store and listener middleware, including tampered storage and storage that throws.
 - **Async actions:** RTK Query endpoints against a mocked `fetch` (normalisation, ZAR conversion, cache hits, per-page caching, error state). Also `baseQueryWithReauth` (401 → refresh → retry, failed refresh → logout and storage cleared) and the session-restore thunk.
 - **Component interactions (integration):** the real store, router, theme and contexts rendered together. Covers browsing, filtering, sorting, debounced search, add/increase/remove in the cart modal, focus returning after Escape, error/retry and empty states, the sign-in redirect and return, form validation with focus on the first invalid field, and successful, declined and 3-D Secure payments.
@@ -232,6 +232,16 @@ The form is in the footer. It follows POPIA: consent is an explicit, unticked ti
 - treats a repeat sign-up as "already subscribed" without re-sending,
 - uses a honeypot field that quietly accepts bots without subscribing them,
 - only subscribes once the welcome email has actually been sent.
+
+### Address search at checkout
+
+The street address field searches as you type, using [Photon](https://photon.komoot.io), a free, keyless geocoder built on OpenStreetMap data for autocomplete. OpenStreetMap's own Nominatim service forbids autocomplete use, so it is not used.
+
+- **Search behaviour:** searches are debounced (350 ms), start at 4 characters, are limited to South Africa's bounding box, and are cached by RTK Query.
+- **Picking a suggestion** fills street, city, province and postal code. A small OpenStreetMap embed then confirms the pin, with attribution.
+- **Typing by hand** always works. Editing the address afterwards removes the pin, and if the service is down the form says so and carries on.
+- **Separate API slice:** the geocoder uses its own `geocodingApi` slice with a plain base query. The main API attaches the user's bearer token, and that must never reach a third party; a test asserts it does not.
+- **Privacy:** what the user types in this field is sent to Photon. A production store would proxy the search through its own backend, or use a provider covered by its privacy policy.
 
 ## Bonus tasks
 

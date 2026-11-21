@@ -17,7 +17,7 @@ interface Stage {
 
 export const STAGES: readonly Stage[] = [
   { status: 'placed', label: 'Order placed', blurb: 'Payment received. Your order is in the net.', afterMinutes: 0 },
-  { status: 'packed', label: 'Packed', blurb: 'Bubble-wrapped with love (and slightly too much tape).', afterMinutes: 2 },
+  { status: 'packed', label: 'Packed', blurb: 'Bubble-wrapped with love.', afterMinutes: 2 },
   {
     status: 'out-for-delivery',
     label: 'Out for delivery',

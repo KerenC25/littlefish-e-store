@@ -36,7 +36,7 @@ const openCart = async (user: User) => {
 
 const fillCheckout = async (user: User, cardNumber: string = TEST_CARDS.success) => {
   await user.type(screen.getByRole('textbox', { name: /Mobile number/ }), '082 123 4567');
-  await user.type(screen.getByRole('textbox', { name: /Street address/ }), '1 Long Street');
+  await user.type(screen.getByRole('combobox', { name: /Street address/ }), '1 Long Street');
   await user.type(screen.getByRole('textbox', { name: /City or town/ }), 'Johannesburg');
   await user.click(screen.getByRole('combobox', { name: /Province/ }));
   await user.click(await screen.findByRole('option', { name: 'Gauteng' }));

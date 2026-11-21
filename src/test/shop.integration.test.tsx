@@ -58,7 +58,7 @@ describe('Shop (integration)', () => {
     expect(JSON.parse(durableStorage.getItem(STORAGE_KEYS.cart) ?? '{}').items[0].quantity).toBe(3);
 
     await user.click(within(dialog).getByRole('button', { name: 'Remove Braai Tongs from cart' }));
-    expect(within(dialog).getByText(/Your cart is emptier than/)).toBeInTheDocument();
+    expect(within(dialog).getByText('Your net is empty!')).toBeInTheDocument();
     expect(cartButton()).toHaveAccessibleName('Cart, empty');
   });
 

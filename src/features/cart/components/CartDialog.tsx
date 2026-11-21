@@ -70,10 +70,14 @@ export const CartDialog = ({ open, onClose }: CartDialogProps) => {
         {ids.length === 0 ? (
           <StatusMessage
             illustration="🛒"
-            title="Your cart is emptier than a Joburg road at 5am on New Year's Day"
+            title="Your net is empty!"
             description="Have a browse. We will keep your picks safe, even if you close the tab."
-            actionLabel="Start shopping"
-            onAction={onClose}
+            actionLabel="Start fishing"
+            // Always lands on the shop, whichever page the cart was opened from.
+            onAction={() => {
+              onClose();
+              navigate('/');
+            }}
           />
         ) : (
           <>

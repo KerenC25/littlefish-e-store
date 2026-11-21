@@ -13,6 +13,12 @@ export const PROVINCES = [
   'Western Cape',
 ] as const;
 
+/** Maps a geocoder's province name ("Kwazulu Natal", "gauteng") to our list, or '' if unknown. */
+export const matchProvince = (name: string): string => {
+  const key = (s: string) => s.toLowerCase().replace(/[^a-z]/g, '');
+  return PROVINCES.find((p) => key(p) === key(name)) ?? '';
+};
+
 export interface CheckoutFormValues {
   fullName: string;
   email: string;

@@ -26,6 +26,7 @@ import { CartSummary } from '../cart/components/CartSummary';
 import {
   PROVINCES,
   emptyCheckoutForm,
+  matchProvince,
   validateCheckout,
   type CheckoutFormErrors,
   type CheckoutFormValues,
@@ -33,6 +34,9 @@ import {
 import { formatCardNumber, formatExpiry, digitsOnly } from './payment/cardValidation';
 import { TEST_CARDS } from './payment/mockPaymentGateway';
 import { useCheckout } from './useCheckout';
+import { AddressAutocomplete } from './address/AddressAutocomplete';
+import { AddressMap } from './address/AddressMap';
+import type { AddressSuggestion } from '../../services/geocodingApi';
 
 /** Fields in visual order, used to focus the first invalid one on submit. */
 const FIELD_ORDER: (keyof CheckoutFormValues)[] = [
@@ -71,6 +75,7 @@ export const CheckoutPage = () => {
   const [errors, setErrors] = useState<CheckoutFormErrors>({});
   const [submitted, setSubmitted] = useState(false);
   const [couponNotice, setCouponNotice] = useState<string | null>(null);
+  const [mapPoint, setMapPoint] = useState<{ lat: number; lon: number; label: string } | null>(null);
   const dispatch = useAppDispatch();
   const couponCode = useAppSelector(selectCouponCode);
   const formRef = useRef<HTMLFormElement>(null);
@@ -97,7 +102,7 @@ export const CheckoutPage = () => {
           Payment successful
         </Typography>
         <Typography color="text.secondary" sx={{ mb: 3 }}>
-          Done. That was quicker than finding parking at the mall in December. Your order is already being packed.
+          Done. Your order is already being packed.
         </Typography>
         <Box component="dl" sx={{ display: 'grid', gridTemplateColumns: 'auto auto', justifyContent: 'center', columnGap: 3, rowGap: 1, mb: 4 }}>
           <Typography component="dt" color="text.secondary">Order reference</Typography>
@@ -147,6 +152,28 @@ export const CheckoutPage = () => {
     setValues(next);
     // After the first submit, re-validate as the user fixes things.
     if (submitted) setErrors(validateCheckout(next));
+  };
+
+  const patch = (changes: Partial<CheckoutFormValues>) => {
+    const next = { ...values, ...changes };
+    setValues(next);
+    if (submitted) setErrors(validateCheckout(next));
+  };
+
+  const typeAddress = (street: string) => {
+    patch({ address: street });
+    setMapPoint(null); // typed by hand: the pin may no longer match
+  };
+
+  /** Picking a suggestion fills the whole address block; anything unknown keeps what was typed. */
+  const pickAddress = (s: AddressSuggestion) => {
+    patch({
+      address: s.street,
+      city: s.city || values.city,
+      province: matchProvince(s.province) || values.province,
+      postalCode: s.postalCode || values.postalCode,
+    });
+    setMapPoint({ lat: s.lat, lon: s.lon, label: s.label });
   };
 
   const handleSubmit = (e: FormEvent) => {
@@ -257,7 +284,17 @@ export const CheckoutPage = () => {
               <Box sx={{ gridColumn: '1 / -1' }}>{field('fullName', 'Full name', { autoComplete: 'name' })}</Box>
               {field('email', 'Email', { type: 'email', autoComplete: 'email' })}
               {field('phone', 'Mobile number', { type: 'tel', autoComplete: 'tel' })}
-              <Box sx={{ gridColumn: '1 / -1' }}>{field('address', 'Street address', { autoComplete: 'street-address' })}</Box>
+              <Box sx={{ gridColumn: '1 / -1' }}>
+                <AddressAutocomplete
+                  value={values.address}
+                  onChange={typeAddress}
+                  onSelect={pickAddress}
+                  error={Boolean(errors.address)}
+                  helperText={errors.address}
+                  disabled={processing}
+                />
+                {mapPoint && <AddressMap {...mapPoint} />}
+              </Box>
               {field('city', 'City or town', { autoComplete: 'address-level2' })}
               {field('province', 'Province', {
                 select: true,
