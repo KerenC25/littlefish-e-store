@@ -88,10 +88,11 @@ export const ProductDetailPage = () => {
               overflow: 'hidden',
             }}
           >
-            <img
+            <Box
+              component="img"
               src={mainImage}
               alt={product.title}
-              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+              sx={{ width: '100%', height: '100%', objectFit: 'contain', p: { xs: 2, md: 4 } }}
             />
           </Box>
           {images.length > 1 && (
@@ -111,13 +112,21 @@ export const ProductDetailPage = () => {
                     borderRadius: '14px',
                     overflow: 'hidden',
                     cursor: 'pointer',
-                    bgcolor: 'grey.100',
+                    bgcolor: '#E6F6F0',
                     border: 2,
                     borderColor: i === activeImage ? 'primary.main' : 'transparent',
-                    '&:focus-visible': { outline: '3px solid', outlineColor: 'secondary.main' },
+                    '&:focus-visible': { outline: '3px solid', outlineColor: 'primary.main', outlineOffset: 2 },
                   }}
                 >
-                  <img src={src} alt="" loading="lazy" width={72} height={72} style={{ objectFit: 'cover' }} />
+                  <Box
+                    component="img"
+                    src={src}
+                    alt=""
+                    loading="lazy"
+                    width={72}
+                    height={72}
+                    sx={{ display: 'block', width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
                 </Box>
               ))}
             </Box>
