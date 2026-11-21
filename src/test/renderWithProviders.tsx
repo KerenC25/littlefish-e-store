@@ -34,7 +34,9 @@ export const renderWithProviders = (
   }: Options = {},
 ) => {
   const store = makeStore({ preloadedState, durableStorage, authStorage, emailTransport, appUrl: TEST_APP_URL });
-  const user = userEvent.setup();
+  // `delay: null` skips the timer user-event waits on between keystrokes. Typing a whole
+  // checkout form then takes milliseconds instead of seconds on slow CI runners.
+  const user = userEvent.setup({ delay: null });
   const result = render(
     <AppProviders store={store} paymentGateway={paymentGateway}>
       <MemoryRouter initialEntries={[route]} future={routerFuture}>

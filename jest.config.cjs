@@ -2,8 +2,9 @@
 module.exports = {
   testEnvironment: 'jsdom',
   roots: ['<rootDir>/src'],
-  // Full-app integration tests (axe scans, typing a whole checkout form) exceed Jest's 5 s default.
-  testTimeout: 20000,
+  // Full-app integration tests (axe scans, typing a whole checkout form) exceed Jest's 5 s
+  // default, and shared CI runners can be several times slower than a laptop.
+  testTimeout: 60000,
   setupFiles: ['<rootDir>/src/test/polyfills.ts'],
   setupFilesAfterEnv: ['<rootDir>/src/test/setupTests.ts'],
   transform: {
