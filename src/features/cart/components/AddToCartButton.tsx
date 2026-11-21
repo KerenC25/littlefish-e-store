@@ -31,7 +31,7 @@ export const AddToCartButton = memo(function AddToCartButton({
 
   const handleClick = useCallback(() => {
     dispatch(itemAdded({ product, quantity }));
-    notify(`${product.title} is in your cart. Lekker.`);
+    notify(`Lekker. ${product.title} is swimming to your cart.`);
   }, [dispatch, notify, product, quantity]);
 
   const label = soldOut ? 'Sold out' : atLimit ? 'All stock in cart' : inCart > 0 ? `Add another (${inCart} in cart)` : 'Add to cart';

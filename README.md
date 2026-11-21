@@ -4,6 +4,8 @@ A single-page e-commerce store built for the **Littlefish Advanced Frontend Tech
 
 React 18 · TypeScript (strict) · Redux Toolkit · RTK Query · MUI 6 · React Router 6 · react-window · Jest + React Testing Library + jest-axe
 
+**Live demo:** https://kerenc25.github.io/littlefish-e-store/
+
 Products, categories and user accounts come from the public [DummyJSON](https://dummyjson.com) API. Payments go through a simulated gateway modelled on Stripe's PaymentIntent flow, so no real money moves.
 
 ---
@@ -28,6 +30,10 @@ npm run dev          # http://localhost:5173
 | `npm run typecheck` | TypeScript only |
 
 **API keys and configuration:** none needed. DummyJSON is public. All settings (API URL, exchange rate, delivery threshold, VAT, page sizes) are in [`src/shared/config.ts`](src/shared/config.ts).
+
+### Deployment
+
+Every push to `main` runs [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml). It runs lint and tests, builds with `--base=/littlefish-e-store/`, and publishes `dist/` to GitHub Pages. GitHub Pages has no SPA rewrites, so the workflow copies `index.html` to `404.html` so that deep links like `/checkout` still load the app.
 
 ### Demo credentials
 

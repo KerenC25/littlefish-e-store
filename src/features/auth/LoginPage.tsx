@@ -61,7 +61,7 @@ export const LoginPage = () => {
           Sign in
         </Typography>
         <Typography color="text.secondary" sx={{ mb: 3 }}>
-          Sign in to check out. We promise not to make you remember a security question.
+          Sign in to check out. No queue, no ticket number, no security question about your first pet.
         </Typography>
 
         {error && (

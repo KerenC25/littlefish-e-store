@@ -27,7 +27,8 @@ export const AppLayout = () => {
       </Container>
       <Box component="footer" sx={{ py: 3, textAlign: 'center', borderTop: 1, borderColor: 'divider' }}>
         <Typography variant="body2" color="text.secondary">
-          Little Fish Market. Made in Mzansi. Products and accounts from DummyJSON; payments simulated.
+          Little Fish Market. Small fish, fast moves. Made in Mzansi. Products and accounts from DummyJSON; payments
+          simulated.
         </Typography>
       </Box>
     </Box>

@@ -112,7 +112,7 @@ export const ProductCard = memo(function ProductCard({ product, position, setSiz
         <Box sx={{ mt: 'auto' }}>
           <Price cents={product.priceCents} discountPercentage={product.discountPercentage} />
           <Typography variant="caption" color={product.stock > 0 ? 'text.secondary' : 'error'}>
-            {product.stock > 0 ? (product.stock < 10 ? `Only ${product.stock} left` : 'In stock') : 'Out of stock'}
+            {product.stock > 0 ? (product.stock < 10 ? `Only ${product.stock} left. Move fast.` : 'In stock') : 'Out of stock'}
           </Typography>
         </Box>
       </Box>

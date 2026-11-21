@@ -90,7 +90,7 @@ export const CheckoutPage = () => {
           Payment successful
         </Typography>
         <Typography color="text.secondary" sx={{ mb: 3 }}>
-          We have your order and we are already packing it. No, really. Someone is wrapping it as you read this.
+          Done. That was quicker than finding parking at the mall in December. Your order is already being packed.
         </Typography>
         <Box component="dl" sx={{ display: 'grid', gridTemplateColumns: 'auto auto', justifyContent: 'center', columnGap: 3, rowGap: 1, mb: 4 }}>
           <Typography component="dt" color="text.secondary">Order reference</Typography>
@@ -239,7 +239,7 @@ export const CheckoutPage = () => {
           </Box>
 
           <Button type="submit" variant="contained" size="large" fullWidth disabled={processing} sx={{ mt: 2 }}>
-            {processing ? 'Processing payment…' : `Pay ${formatZar(totals.totalCents)}`}
+            {processing ? 'Swimming to your bank…' : `Pay ${formatZar(totals.totalCents)}`}
           </Button>
         </Paper>
 

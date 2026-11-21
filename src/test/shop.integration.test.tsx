@@ -40,7 +40,7 @@ describe('Shop (integration)', () => {
 
     await user.click(screen.getByRole('button', { name: 'Add Braai Tongs to cart' }));
     expect(cartButton()).toHaveAccessibleName('Cart, 1 item');
-    expect(await screen.findByText('Braai Tongs is in your cart. Lekker.')).toBeInTheDocument();
+    expect(await screen.findByText('Lekker. Braai Tongs is swimming to your cart.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Add Braai Tongs to cart' })).toHaveTextContent('Add another (1 in cart)');
 
     await user.click(cartButton());

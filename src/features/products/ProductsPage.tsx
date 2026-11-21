@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import Box from '@mui/material/Box';
+import Chip from '@mui/material/Chip';
 import LinearProgress from '@mui/material/LinearProgress';
 import Pagination from '@mui/material/Pagination';
 import Typography from '@mui/material/Typography';
@@ -34,11 +35,19 @@ export const ProductsPage = () => {
     <Box component="section" aria-labelledby="catalog-heading">
       <Box sx={{ mb: 3 }}>
         <Typography id="catalog-heading" variant="h4" component="h1" gutterBottom>
-          Small shop. Big catch.
+          Small fish. Fast moves.
         </Typography>
         <Typography color="text.secondary">
-          Hand-picked goods, prices in Rand, and zero load shedding at checkout.
+          The big shops have the queues. We have the stock, prices in Rand, and a checkout quicker than a taxi at an
+          orange light.
         </Typography>
+        <Box component="ul" aria-label="Why shop here" sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, listStyle: 'none', p: 0, m: 0, mt: 2 }}>
+          {['Delivery now-now, not just now', 'Free delivery over R1 000', 'Checkout in under a minute'].map((perk) => (
+            <Box component="li" key={perk}>
+              <Chip label={perk} variant="outlined" color="primary" size="small" />
+            </Box>
+          ))}
+        </Box>
       </Box>
 
       <CatalogToolbar />

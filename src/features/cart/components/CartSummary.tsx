@@ -27,8 +27,8 @@ export const CartSummary = () => {
       <Box sx={{ mb: 2 }}>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
           {totals.freeShippingRemainingCents > 0
-            ? `Spend ${formatZar(totals.freeShippingRemainingCents)} more for free delivery.`
-            : 'You have unlocked free delivery. Sharp sharp.'}
+            ? `${formatZar(totals.freeShippingRemainingCents)} away from free delivery. So close you can smell the braai.`
+            : 'Free delivery unlocked. Sharp sharp.'}
         </Typography>
         <LinearProgress
           variant="determinate"

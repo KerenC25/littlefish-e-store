@@ -18,7 +18,8 @@ if (!container) throw new Error('Root element #root not found');
 createRoot(container).render(
   <StrictMode>
     <AppProviders>
-      <BrowserRouter future={routerFuture}>
+      {/* BASE_URL is "/" locally and "/littlefish-e-store/" on GitHub Pages (set by --base at build time). */}
+      <BrowserRouter basename={import.meta.env.BASE_URL} future={routerFuture}>
         <AppRoutes />
       </BrowserRouter>
     </AppProviders>
