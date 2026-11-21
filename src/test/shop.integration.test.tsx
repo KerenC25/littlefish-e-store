@@ -16,6 +16,9 @@ const catalogApi = (products = sampleProducts) => [
 ];
 
 // `hidden: true` because MUI correctly aria-hides the page behind an open modal.
+/** axe walks the whole DOM; under coverage instrumentation a full page can take 20 s+. */
+const AXE_TIMEOUT_MS = 60_000;
+
 const cartButton = () => screen.getByRole('button', { name: /^Cart,/, hidden: true });
 
 describe('Shop (integration)', () => {
@@ -129,5 +132,5 @@ describe('Shop (integration)', () => {
     await user.click(cartButton());
     const dialog = await screen.findByRole('dialog', { name: 'Your cart' });
     expect(await axe(dialog)).toHaveNoViolations();
-  });
+  }, AXE_TIMEOUT_MS);
 });

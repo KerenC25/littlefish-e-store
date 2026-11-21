@@ -243,7 +243,8 @@ export const CheckoutPage = () => {
           </Button>
         </Paper>
 
-        <Paper component="aside" aria-labelledby="summary-heading" sx={{ p: { xs: 2, sm: 3 }, position: { md: 'sticky' }, top: { md: 88 } }}>
+        {/* A labelled section, not <aside>: complementary landmarks may not sit inside <main>. */}
+        <Paper component="section" aria-labelledby="summary-heading" sx={{ p: { xs: 2, sm: 3 }, position: { md: 'sticky' }, top: { md: 88 } }}>
           <Typography id="summary-heading" variant="h6" component="h2" gutterBottom>
             Order summary
           </Typography>

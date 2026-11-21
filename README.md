@@ -111,11 +111,12 @@ src/
 Pagination (`limit`/`skip`), sorting (`sortBy`/`order`), filtering (category, search), caching (per-argument cache entries, `keepUnusedDataFor`, tags, `refetchOnReconnect`), prefetching, and authenticated requests with transparent token refresh and retry.
 
 ### Testing
-**85 tests across 11 suites**, covering:
+**103 tests across 12 suites, covering 96.8% of lines and 83.6% of branches** (`npm run test:coverage`). The suites cover:
 - **Redux store:** reducers and selectors (`cartSlice`, `catalogSlice`), memoisation, and persistence through the real store and listener middleware, including tampered storage and storage that throws.
 - **Async actions:** RTK Query endpoints against a mocked `fetch` (normalisation, ZAR conversion, cache hits, per-page caching, error state). Also `baseQueryWithReauth` (401 → refresh → retry, failed refresh → logout and storage cleared) and the session-restore thunk.
 - **Component interactions (integration):** the real store, router, theme and contexts rendered together. Covers browsing, filtering, sorting, debounced search, add/increase/remove in the cart modal, focus returning after Escape, error/retry and empty states, the sign-in redirect and return, form validation with focus on the first invalid field, and successful, declined and 3-D Secure payments.
-- **Accessibility:** `jest-axe` runs on the catalogue and on the open cart dialog. During development it caught a skipped heading level, which is now fixed.
+- **Pages:** the product detail page (rendering, focus on load, image gallery, add to cart, sold-out state, not found, invalid ids rejected without an API call, error and retry, back link) and the 404 route.
+- **Accessibility:** `jest-axe` runs on **every route**: catalogue, open cart dialog, product detail, sign-in (clean and with validation errors), checkout (before and after a failed submit) and 404. It caught two real issues during development, both now fixed: a skipped heading level on product cards, and the checkout summary being an `<aside>` nested inside `<main>`.
 
 ### Security and authentication
 - **Real authentication** against DummyJSON's JWT endpoints (`/auth/login`, `/auth/refresh`, `/auth/me`).
