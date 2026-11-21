@@ -111,7 +111,7 @@ src/
 Pagination (`limit`/`skip`), sorting (`sortBy`/`order`), filtering (category, search), caching (per-argument cache entries, `keepUnusedDataFor`, tags, `refetchOnReconnect`), prefetching, and authenticated requests with transparent token refresh and retry.
 
 ### Testing
-**122 tests across 14 suites, covering 96.6% of lines and 85.3% of branches** (`npm run test:coverage`). The suites cover:
+**176 tests across 18 suites, covering 97.0% of lines and 86.0% of branches** (`npm run test:coverage`). The suites cover:
 - **Redux store:** reducers and selectors (`cartSlice`, `catalogSlice`), memoisation, and persistence through the real store and listener middleware, including tampered storage and storage that throws.
 - **Async actions:** RTK Query endpoints against a mocked `fetch` (normalisation, ZAR conversion, cache hits, per-page caching, error state). Also `baseQueryWithReauth` (401 → refresh → retry, failed refresh → logout and storage cleared) and the session-restore thunk.
 - **Component interactions (integration):** the real store, router, theme and contexts rendered together. Covers browsing, filtering, sorting, debounced search, add/increase/remove in the cart modal, focus returning after Escape, error/retry and empty states, the sign-in redirect and return, form validation with focus on the first invalid field, and successful, declined and 3-D Secure payments.
@@ -181,6 +181,57 @@ The tokens live in [`src/app/theme.ts`](src/app/theme.ts), and every text pairin
 - An **A–Z directory** dialog with search and letter jump links.
 
 DummyJSON has no brand filter, so the full catalogue (194 products, listing fields only) is fetched once and cached for 10 minutes. Brands, brand filtering, sorting and paging are then derived client-side by pure, unit-tested functions in [`src/features/products/brands.ts`](src/features/products/brands.ts). The same cached request feeds the hero stats. Brand, category and search are mutually exclusive, which the reducer enforces. If the catalogue request fails, the rail hides and the rest of the shop keeps working.
+
+## Coupons, orders, email and newsletter
+
+This is a static site with no backend, so each feature is built behind a seam that a real server or provider can replace without UI changes.
+
+### Coupons
+
+The rules are pure functions in [`src/features/coupons/coupons.ts`](src/features/coupons/coupons.ts). A code can be applied from the cart or at checkout.
+
+| Code | Effect |
+| --- | --- |
+| `LEKKER10` | 10% off |
+| `JOZI100` | R100 off orders of R750 or more |
+| `FREESHIP` | Free delivery |
+| `SHOAL15` | 15% off, sent in the newsletter welcome email |
+| `BLACKFRIDAY` | Expired, to show the error message |
+
+- **Order of operations:** subtotal, then the coupon discount, then delivery. The free-delivery threshold is measured on the *discounted* subtotal.
+- **Re-checking:** totals re-check the code every time the cart changes. If the cart drops below a coupon's minimum, the UI says why it stopped applying.
+- **Expiry:** checked again at the moment of payment. An expired coupon is removed rather than charging the wrong amount.
+- **Security:** the coupon list ships to the browser, so anyone can read it. In production the server owns the codes, validates them, and recomputes the amount it charges.
+
+### Order tracking
+
+Each paid order is stored as an immutable snapshot: lines, prices, totals, coupon, address and card brand with last 4 digits. It is persisted to localStorage and schema-checked on load.
+
+- **Pages:**
+  - `/orders/:reference` shows a live timeline that re-renders every 15 seconds and announces changes politely to screen readers.
+  - `/orders` lists your orders when signed in.
+  - `/track` is a guest lookup by reference plus email.
+- **Access:** an order is shown only to its signed-in owner, or to someone who has just entered the matching email on `/track`. The verified email travels in history state, never in the URL. A wrong reference and a wrong email give the same response, so references cannot be probed.
+- **Simulated courier:** there is no courier API, so `trackOrder()` derives the status from the order time on a compressed demo clock. Orders are packed at 2 minutes, out for delivery at 10 and delivered at 45, so a reviewer can watch one move. Courier webhooks would replace this one function.
+
+### Email confirmations
+
+Emails go through an `EmailTransport` interface, injected into thunks via Redux Toolkit's `extraArgument`. The demo transport delivers to an in-app **demo inbox** at `/inbox`, with an unread badge in the header.
+
+- **Templates:** an order confirmation (items, coupon, totals, VAT, address, estimated delivery and an absolute tracking link) and a newsletter welcome email.
+- **Plain text only:** templates produce plain text, which is rendered as text, never as HTML, so a message cannot inject markup.
+- **Safe links:** stored messages with links that point off-site are rejected on load.
+- **Failure handling:** a failed email never undoes a paid order; the receipt says so instead.
+- **Production:** an adapter would POST to our own backend, which holds the provider's secret key (Resend, SendGrid or SES). That key must never ship to the browser.
+
+### Newsletter sign-up
+
+The form is in the footer. It follows POPIA: consent is an explicit, unticked tick box, the consent time is recorded, and there is a clear way to unsubscribe. It also:
+
+- validates and normalises the email,
+- treats a repeat sign-up as "already subscribed" without re-sending,
+- uses a honeypot field that quietly accepts bots without subscribing them,
+- only subscribes once the welcome email has actually been sent.
 
 ## Bonus tasks
 

@@ -9,6 +9,7 @@ import { brand as tokens } from '../app/theme';
 import { CartButton } from '../features/cart/components/CartButton';
 import { CartDialog } from '../features/cart/components/CartDialog';
 import { UserMenu } from '../features/auth/components/UserMenu';
+import { InboxButton } from '../features/email/InboxButton';
 
 const FishLogo = () => (
   <svg width="34" height="34" viewBox="0 0 64 64" aria-hidden focusable="false">
@@ -55,6 +56,7 @@ export const Header = () => {
           <Box sx={{ flex: 1 }} />
           <Box component="nav" aria-label="Account and cart" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <UserMenu />
+            <InboxButton />
             <CartButton onClick={openCart} expanded={cartOpen} />
           </Box>
         </Toolbar>

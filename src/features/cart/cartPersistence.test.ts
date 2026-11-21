@@ -7,23 +7,23 @@ import { itemAdded, selectCartCount } from './cartSlice';
 
 describe('cart persistence', () => {
   it('saves the cart to storage on every cart action (listener middleware)', () => {
-    const cartStorage = createMemoryStorage();
-    const store = makeStore({ cartStorage, authStorage: createMemoryStorage() });
+    const durableStorage = createMemoryStorage();
+    const store = makeStore({ durableStorage, authStorage: createMemoryStorage() });
 
     store.dispatch(itemAdded({ product: product({ id: 7, stock: 5 }), quantity: 2 }));
 
-    const saved = JSON.parse(cartStorage.getItem(STORAGE_KEYS.cart) ?? 'null');
+    const saved = JSON.parse(durableStorage.getItem(STORAGE_KEYS.cart) ?? 'null');
     expect(saved.version).toBe(1);
     expect(saved.items).toEqual([expect.objectContaining({ productId: 7, quantity: 2 })]);
   });
 
   it('rehydrates the cart in a new session', () => {
-    const cartStorage = createMemoryStorage();
-    makeStore({ cartStorage, authStorage: createMemoryStorage() }).dispatch(
+    const durableStorage = createMemoryStorage();
+    makeStore({ durableStorage, authStorage: createMemoryStorage() }).dispatch(
       itemAdded({ product: product({ id: 7, stock: 5 }), quantity: 3 }),
     );
 
-    const nextSession = makeStore({ cartStorage, authStorage: createMemoryStorage() });
+    const nextSession = makeStore({ durableStorage, authStorage: createMemoryStorage() });
     expect(selectCartCount(nextSession.getState())).toBe(3);
   });
 
@@ -44,7 +44,7 @@ describe('cart persistence', () => {
     broken.setItem = () => {
       throw new Error('QuotaExceededError');
     };
-    const store = makeStore({ cartStorage: broken, authStorage: createMemoryStorage() });
+    const store = makeStore({ durableStorage: broken, authStorage: createMemoryStorage() });
     expect(() => store.dispatch(itemAdded({ product: product() }))).not.toThrow();
   });
 });

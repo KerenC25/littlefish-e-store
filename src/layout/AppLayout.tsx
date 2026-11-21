@@ -1,5 +1,7 @@
 import { Suspense, useEffect } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Link as RouterLink, Outlet, useLocation } from 'react-router-dom';
+import Link from '@mui/material/Link';
+import { NewsletterSignup } from '../features/newsletter/NewsletterSignup';
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
@@ -38,18 +40,54 @@ export const AppLayout = () => {
       <Box component="footer" sx={{ mt: 6, bgcolor: brand.ink, color: brand.body }}>
         <Container
           maxWidth="xl"
-          sx={{ py: { xs: 4, md: 5 }, display: 'flex', flexWrap: 'wrap', gap: 2, justifyContent: 'space-between', alignItems: 'center' }}
+          sx={{
+            py: { xs: 5, md: 6 },
+            display: 'grid',
+            gap: { xs: 4, md: 6 },
+            gridTemplateColumns: { xs: '1fr', md: '1.4fr 1fr' },
+          }}
         >
-          <Typography sx={{ color: '#FFFFFF', fontWeight: 800, fontSize: 18, letterSpacing: '-0.02em' }}>
-            Small fish.{' '}
-            <Box component="span" sx={{ color: brand.mint }}>
-              Fast moves.
+          <NewsletterSignup />
+          <Box component="nav" aria-label="Help">
+            <Typography component="h2" sx={{ color: '#FFFFFF', fontWeight: 800, fontSize: 16, mb: 1.5 }}>
+              Help
+            </Typography>
+            <Box component="ul" sx={{ listStyle: 'none', p: 0, m: 0, display: 'grid', gap: 1 }}>
+              {[
+                { to: '/track', label: 'Track an order' },
+                { to: '/orders', label: 'My orders' },
+                { to: '/inbox', label: 'Demo inbox' },
+              ].map((link) => (
+                <li key={link.to}>
+                  <Link
+                    component={RouterLink}
+                    to={link.to}
+                    underline="hover"
+                    sx={{ color: brand.body, '&:hover': { color: brand.mint }, '&:focus-visible': { outline: `3px solid ${brand.mint}`, borderRadius: 1 } }}
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
             </Box>
-          </Typography>
-          <Typography variant="body2">
-            Made in Mzansi. Products and accounts from DummyJSON; payments simulated. No real fish were harmed.
-          </Typography>
+          </Box>
         </Container>
+        <Box sx={{ borderTop: `1px solid ${brand.line}` }}>
+          <Container
+            maxWidth="xl"
+            sx={{ py: 2.5, display: 'flex', flexWrap: 'wrap', gap: 2, justifyContent: 'space-between', alignItems: 'center' }}
+          >
+            <Typography sx={{ color: '#FFFFFF', fontWeight: 800, fontSize: 18, letterSpacing: '-0.02em' }}>
+              Small fish.{' '}
+              <Box component="span" sx={{ color: brand.mint }}>
+                Fast moves.
+              </Box>
+            </Typography>
+            <Typography variant="body2">
+              Made in Jozi. Products and accounts from DummyJSON; payments and email simulated. No real fish were harmed.
+            </Typography>
+          </Container>
+        </Box>
       </Box>
     </Box>
   );

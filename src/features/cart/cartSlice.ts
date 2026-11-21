@@ -8,6 +8,8 @@ import {
 import { FREE_SHIPPING_THRESHOLD_CENTS, SHIPPING_FEE_CENTS } from '../../shared/config';
 import { vatPortion, type Cents } from '../../shared/utils/money';
 import type { Product } from '../products/types';
+import { couponDiscountCents, validateCoupon } from '../coupons/coupons';
+import type { CouponState } from '../coupons/couponSlice';
 
 /**
  * A cart line keeps a snapshot of the product fields it needs. That keeps the cart
@@ -83,7 +85,8 @@ export const cartActions = cartSlice.actions;
 
 // ---- Selectors -------------------------------------------------------------------------
 
-type StateWithCart = { cart: CartState };
+/** `coupon` is optional so cart selectors stay usable (and testable) on their own. */
+type StateWithCart = { cart: CartState; coupon?: CouponState };
 
 const adapterSelectors = cartAdapter.getSelectors<StateWithCart>((state) => state.cart);
 
@@ -101,25 +104,59 @@ export const selectQuantityInCart = (state: StateWithCart, productId: number): n
 
 export interface CartTotals {
   subtotalCents: Cents;
+  /** Coupon money off the subtotal (0 when no coupon applies). */
+  discountCents: Cents;
   shippingCents: Cents;
   totalCents: Cents;
   vatCents: Cents;
   /** How much more to spend for free shipping; 0 once reached. */
   freeShippingRemainingCents: Cents;
+  /** The coupon that is actually applied after re-checking its rules, if any. */
+  couponCode: string | null;
+  /** Why an entered coupon is not applying right now (e.g. the cart dropped below its minimum). */
+  couponIssue: string | null;
 }
 
-export const calculateTotals = (items: readonly CartItem[]): CartTotals => {
+/**
+ * Order of operations: subtotal, minus coupon, then delivery. The free-delivery threshold is
+ * measured on the *discounted* subtotal, so a coupon cannot also unlock free delivery for free.
+ */
+export const calculateTotals = (items: readonly CartItem[], couponCode: string | null = null): CartTotals => {
   const subtotalCents = items.reduce((sum, i) => sum + i.unitPriceCents * i.quantity, 0);
-  const qualifies = subtotalCents === 0 || subtotalCents >= FREE_SHIPPING_THRESHOLD_CENTS;
+
+  let discountCents = 0;
+  let appliedCode: string | null = null;
+  let couponIssue: string | null = null;
+  let freeShippingCoupon = false;
+  if (couponCode && subtotalCents > 0) {
+    // Time-independent re-check (min spend, still exists). Expiry is checked when applying.
+    const check = validateCoupon(couponCode, subtotalCents, new Date(0));
+    if (check.ok) {
+      appliedCode = check.coupon.code;
+      discountCents = couponDiscountCents(check.coupon, subtotalCents);
+      freeShippingCoupon = check.coupon.kind === 'free-shipping';
+    } else {
+      couponIssue = check.message;
+    }
+  }
+
+  const discountedCents = subtotalCents - discountCents;
+  const qualifies = subtotalCents === 0 || freeShippingCoupon || discountedCents >= FREE_SHIPPING_THRESHOLD_CENTS;
   const shippingCents = qualifies ? 0 : SHIPPING_FEE_CENTS;
-  const totalCents = subtotalCents + shippingCents;
+  const totalCents = discountedCents + shippingCents;
   return {
     subtotalCents,
+    discountCents,
     shippingCents,
     totalCents,
     vatCents: vatPortion(totalCents),
-    freeShippingRemainingCents: Math.max(0, FREE_SHIPPING_THRESHOLD_CENTS - subtotalCents),
+    freeShippingRemainingCents: freeShippingCoupon ? 0 : Math.max(0, FREE_SHIPPING_THRESHOLD_CENTS - discountedCents),
+    couponCode: appliedCode,
+    couponIssue,
   };
 };
 
-export const selectCartTotals = createSelector([selectCartItems], calculateTotals);
+export const selectCartTotals = createSelector(
+  [selectCartItems, (state: StateWithCart) => state.coupon?.code ?? null],
+  calculateTotals,
+);

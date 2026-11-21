@@ -11,7 +11,7 @@ const args = (overrides: Partial<ProductsQueryArgs> = {}): ProductsQueryArgs => 
   ...overrides,
 });
 
-const newStore = () => makeStore({ cartStorage: createMemoryStorage(), authStorage: createMemoryStorage() });
+const newStore = () => makeStore({ durableStorage: createMemoryStorage(), authStorage: createMemoryStorage() });
 
 describe('buildProductsUrl', () => {
   it('maps page and size to limit/skip', () => {

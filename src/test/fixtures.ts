@@ -1,5 +1,6 @@
 import type { ApiProduct, ApiProductPage, Product } from '../features/products/types';
 import { toProduct } from '../features/products/mappers';
+import type { Order } from '../features/orders/types';
 
 export const apiProduct = (overrides: Partial<ApiProduct> = {}): ApiProduct => ({
   id: 1,
@@ -44,3 +45,17 @@ export const loginResponse = {
   accessToken: 'access-1',
   refreshToken: 'refresh-1',
 };
+
+export const order = (overrides: Partial<Order> = {}): Order => ({
+  reference: 'LFM-1A2B3C4D',
+  placedAt: new Date().toISOString(),
+  userId: 1,
+  customerName: 'Thandi Nkosi',
+  email: 'thandi@example.test',
+  phone: '0821234567',
+  address: { street: '1 Long Street', city: 'Johannesburg', province: 'Gauteng', postalCode: '2001' },
+  lines: [{ productId: 2, title: 'Braai Tongs', thumbnail: '', unitPriceCents: 462_50, quantity: 2 }],
+  totals: { subtotalCents: 925_00, discountCents: 0, shippingCents: 99_00, totalCents: 1_024_00, vatCents: 133_57, couponCode: null },
+  payment: { brand: 'Visa', last4: '4242' },
+  ...overrides,
+});

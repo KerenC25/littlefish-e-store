@@ -5,6 +5,7 @@ import { useAppSelector } from '../../../app/hooks';
 import { FREE_SHIPPING_THRESHOLD_CENTS } from '../../../shared/config';
 import { formatZar } from '../../../shared/utils/money';
 import { selectCartTotals } from '../cartSlice';
+import { CouponField } from '../../coupons/CouponField';
 
 const Line = ({ label, value, strong }: { label: string; value: string; strong?: boolean }) => (
   <Box sx={{ display: 'contents' }}>
@@ -18,12 +19,18 @@ const Line = ({ label, value, strong }: { label: string; value: string; strong?:
 );
 
 /** Shared by the cart modal and checkout so totals can never disagree. */
-export const CartSummary = () => {
+export const CartSummary = ({ couponDisabled = false }: { couponDisabled?: boolean }) => {
   const totals = useAppSelector(selectCartTotals);
-  const progress = Math.min(100, (totals.subtotalCents / FREE_SHIPPING_THRESHOLD_CENTS) * 100);
+  const progress =
+    totals.freeShippingRemainingCents === 0
+      ? 100
+      : Math.min(100, ((totals.subtotalCents - totals.discountCents) / FREE_SHIPPING_THRESHOLD_CENTS) * 100);
 
   return (
     <Box>
+      <Box sx={{ mb: 2 }}>
+        <CouponField disabled={couponDisabled} />
+      </Box>
       <Box sx={{ mb: 2 }}>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
           {totals.freeShippingRemainingCents > 0
@@ -39,6 +46,9 @@ export const CartSummary = () => {
       </Box>
       <Box component="dl" sx={{ display: 'grid', gridTemplateColumns: '1fr auto', rowGap: 1, m: 0 }}>
         <Line label="Subtotal" value={formatZar(totals.subtotalCents)} />
+        {totals.discountCents > 0 && (
+          <Line label={`Coupon (${totals.couponCode})`} value={`-${formatZar(totals.discountCents)}`} />
+        )}
         <Line label="Delivery" value={totals.shippingCents === 0 ? 'Free' : formatZar(totals.shippingCents)} />
         <Line label="Total" value={formatZar(totals.totalCents)} strong />
         <Typography component="dt" variant="caption" color="text.secondary">

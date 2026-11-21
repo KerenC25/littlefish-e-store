@@ -24,5 +24,9 @@ export const DEFAULT_PAGE_SIZE = 24;
 
 export const STORAGE_KEYS = {
   cart: 'lfm.cart.v1',
+  coupon: 'lfm.coupon.v1',
+  orders: 'lfm.orders.v1',
+  outbox: 'lfm.outbox.v1',
+  newsletter: 'lfm.newsletter.v1',
   refreshToken: 'lfm.auth.refresh.v1',
 } as const;

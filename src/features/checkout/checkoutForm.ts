@@ -1,3 +1,4 @@
+import { isValidEmail } from '../../shared/utils/validation';
 import { isValidCvc, isValidExpiry, passesLuhn } from './payment/cardValidation';
 
 export const PROVINCES = [
@@ -42,7 +43,6 @@ export const emptyCheckoutForm: CheckoutFormValues = {
   cvc: '',
 };
 
-const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 /** SA numbers: 0XX XXX XXXX or +27 XX XXX XXXX, spaces optional. */
 const SA_PHONE = /^(\+27|0)[1-8]\d{8}$/;
 const SA_POSTAL_CODE = /^\d{4}$/;
@@ -55,7 +55,7 @@ export const validateCheckout = (v: CheckoutFormValues, now: Date = new Date()):
   };
 
   required('fullName', 'Enter your full name');
-  if (!EMAIL.test(v.email.trim())) errors.email = 'Enter a valid email address';
+  if (!isValidEmail(v.email)) errors.email = 'Enter a valid email address';
   if (!SA_PHONE.test(v.phone.replace(/\s/g, ''))) errors.phone = 'Enter a South African number, e.g. 082 123 4567';
   required('address', 'Enter your street address');
   required('city', 'Enter your city or town');

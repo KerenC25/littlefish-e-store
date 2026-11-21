@@ -124,7 +124,7 @@ export const Hero = memo(function Hero() {
           }}
         >
           <Box component="span" aria-hidden sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: tokens.amber }} />
-          Mzansi&apos;s quickest little shop
+          Jozi&apos;s quickest little shop
         </Box>
 
         <Typography id="catalog-heading" variant="h1" sx={{ fontSize: { xs: '2.75rem', sm: '3.75rem', md: '4.75rem' } }}>

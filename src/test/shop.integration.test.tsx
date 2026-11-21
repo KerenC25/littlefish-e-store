@@ -36,7 +36,7 @@ describe('Shop (integration)', () => {
 
   it('keeps the header badge, product buttons and cart modal in sync', async () => {
     mockFetch(...catalogApi());
-    const { user, cartStorage } = renderWithProviders(<AppRoutes />);
+    const { user, durableStorage } = renderWithProviders(<AppRoutes />);
 
     expect(await screen.findByRole('button', { name: 'Add Braai Tongs to cart' })).toBeEnabled();
     expect(cartButton()).toHaveAccessibleName('Cart, empty');
@@ -55,7 +55,7 @@ describe('Shop (integration)', () => {
     expect(within(dialog).getByRole('button', { name: 'Increase quantity of Braai Tongs' })).toBeDisabled();
     expect(cartButton()).toHaveAccessibleName('Cart, 3 items');
     expect(within(dialog).getByText('Total')).toBeInTheDocument();
-    expect(JSON.parse(cartStorage.getItem(STORAGE_KEYS.cart) ?? '{}').items[0].quantity).toBe(3);
+    expect(JSON.parse(durableStorage.getItem(STORAGE_KEYS.cart) ?? '{}').items[0].quantity).toBe(3);
 
     await user.click(within(dialog).getByRole('button', { name: 'Remove Braai Tongs from cart' }));
     expect(within(dialog).getByText(/Your cart is emptier than/)).toBeInTheDocument();

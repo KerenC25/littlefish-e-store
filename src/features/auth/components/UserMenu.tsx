@@ -49,6 +49,9 @@ export const UserMenu = () => {
         <MenuItem disabled>
           <ListItemText primary={`${user.firstName} ${user.lastName}`} secondary={user.email} />
         </MenuItem>
+        <MenuItem component={RouterLink} to="/orders" onClick={() => setAnchor(null)}>
+          My orders
+        </MenuItem>
         <MenuItem
           onClick={() => {
             setAnchor(null);

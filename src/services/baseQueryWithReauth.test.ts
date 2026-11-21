@@ -10,7 +10,7 @@ import { mockFetch, on } from '../test/mockFetch';
 const user = { id: 1, username: 'emilys', email: 'e@x.test', firstName: 'Emily', lastName: 'J' };
 
 const signedInStore = (authStorage = createMemoryStorage()) => {
-  const store = makeStore({ cartStorage: createMemoryStorage(), authStorage });
+  const store = makeStore({ durableStorage: createMemoryStorage(), authStorage });
   store.dispatch(credentialsReceived({ user, accessToken: 'expired', refreshToken: 'refresh-1' }));
   return store;
 };
@@ -63,7 +63,7 @@ describe('auth session', () => {
   it('stores the refresh token, never the access token', async () => {
     mockFetch(on('POST', '/auth/login', () => loginResponse));
     const authStorage = createMemoryStorage();
-    const store = makeStore({ cartStorage: createMemoryStorage(), authStorage });
+    const store = makeStore({ durableStorage: createMemoryStorage(), authStorage });
 
     await store.dispatch(authApi.endpoints.login.initiate({ username: ' emilys ', password: 'emilyspass' }));
 
@@ -75,7 +75,7 @@ describe('auth session', () => {
 
   it('trims the username before sending', async () => {
     const { calls } = mockFetch(on('POST', '/auth/login', () => loginResponse));
-    const store = makeStore({ cartStorage: createMemoryStorage(), authStorage: createMemoryStorage() });
+    const store = makeStore({ durableStorage: createMemoryStorage(), authStorage: createMemoryStorage() });
     await store.dispatch(authApi.endpoints.login.initiate({ username: ' emilys ', password: 'p' }));
     expect(calls[0]?.body).toMatchObject({ username: 'emilys' });
   });
@@ -86,7 +86,7 @@ describe('auth session', () => {
       on('GET', '/auth/me', () => user),
     );
     const authStorage = createMemoryStorage({ [STORAGE_KEYS.refreshToken]: JSON.stringify('refresh-1') });
-    const store = makeStore({ cartStorage: createMemoryStorage(), authStorage });
+    const store = makeStore({ durableStorage: createMemoryStorage(), authStorage });
 
     const result = await store.dispatch(restoreSession());
 

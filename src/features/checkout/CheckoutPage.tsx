@@ -4,6 +4,7 @@ import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
+import Link from '@mui/material/Link';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
@@ -13,7 +14,10 @@ import Paper from '@mui/material/Paper';
 import TextField, { type TextFieldProps } from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import { useAppSelector } from '../../app/hooks';
+import { useAppDispatch, useAppSelector } from '../../app/hooks';
+import { validateCoupon } from '../coupons/coupons';
+import { couponRemoved, selectCouponCode } from '../coupons/couponSlice';
+import type { OrderDraft } from '../orders/types';
 import { StatusMessage } from '../../shared/components/StatusMessage';
 import { formatZar } from '../../shared/utils/money';
 import { selectCurrentUser } from '../auth/authSlice';
@@ -66,6 +70,9 @@ export const CheckoutPage = () => {
   }));
   const [errors, setErrors] = useState<CheckoutFormErrors>({});
   const [submitted, setSubmitted] = useState(false);
+  const [couponNotice, setCouponNotice] = useState<string | null>(null);
+  const dispatch = useAppDispatch();
+  const couponCode = useAppSelector(selectCouponCode);
   const formRef = useRef<HTMLFormElement>(null);
   const resultHeadingRef = useRef<HTMLHeadingElement>(null);
 
@@ -100,9 +107,26 @@ export const CheckoutPage = () => {
           <Typography component="dt" color="text.secondary">Paid with</Typography>
           <Typography component="dd" fontWeight={700} sx={{ m: 0 }}>{`${receipt.brand} ending ${receipt.last4}`}</Typography>
         </Box>
-        <Button component={RouterLink} to="/" variant="contained">
-          Back to the shop
-        </Button>
+        <Alert severity={receipt.emailSent ? 'success' : 'warning'} role="note" sx={{ mb: 3, textAlign: 'left' }}>
+          {receipt.emailSent ? (
+            <>
+              Confirmation sent to <strong>{receipt.email}</strong>.{' '}
+              <Link component={RouterLink} to="/inbox">
+                Open the demo inbox
+              </Link>
+            </>
+          ) : (
+            'Your order is placed, but the confirmation email did not go through. Your order page has everything.'
+          )}
+        </Alert>
+        <Box sx={{ display: 'flex', gap: 1.5, justifyContent: 'center', flexWrap: 'wrap' }}>
+          <Button component={RouterLink} to={`/orders/${receipt.reference}`} variant="contained" color="secondary">
+            Track your order
+          </Button>
+          <Button component={RouterLink} to="/" variant="outlined">
+            Back to the shop
+          </Button>
+        </Box>
       </Paper>
     );
   }
@@ -136,12 +160,49 @@ export const CheckoutPage = () => {
       formRef.current?.querySelector<HTMLElement>(`[name="${firstInvalid}"]`)?.focus();
       return;
     }
-    void pay(totals.totalCents, {
-      number: values.cardNumber,
-      expiry: values.expiry,
-      cvc: values.cvc,
-      holderName: values.cardName,
-    });
+    // Last-moment coupon check (expiry is time-based, so the cart total alone cannot know).
+    if (couponCode) {
+      const check = validateCoupon(couponCode, totals.subtotalCents);
+      if (!check.ok) {
+        dispatch(couponRemoved());
+        setCouponNotice(`${check.message} We removed it, so please check the new total.`);
+        return;
+      }
+    }
+    setCouponNotice(null);
+
+    const draft: OrderDraft = {
+      userId: user?.id ?? null,
+      customerName: values.fullName.trim(),
+      email: values.email.trim(),
+      phone: values.phone.replace(/\s/g, ''),
+      address: {
+        street: values.address.trim(),
+        city: values.city.trim(),
+        province: values.province,
+        postalCode: values.postalCode.trim(),
+      },
+      lines: items.map(({ productId, title, thumbnail, unitPriceCents, quantity }) => ({
+        productId,
+        title,
+        thumbnail,
+        unitPriceCents,
+        quantity,
+      })),
+      totals: {
+        subtotalCents: totals.subtotalCents,
+        discountCents: totals.discountCents,
+        shippingCents: totals.shippingCents,
+        totalCents: totals.totalCents,
+        vatCents: totals.vatCents,
+        couponCode: totals.couponCode,
+      },
+    };
+    void pay(
+      totals.totalCents,
+      { number: values.cardNumber, expiry: values.expiry, cvc: values.cvc, holderName: values.cardName },
+      draft,
+    );
   };
 
   const field = (key: keyof CheckoutFormValues, label: string, props: TextFieldProps = {}) => (
@@ -174,6 +235,11 @@ export const CheckoutPage = () => {
             {submitted && errorCount > 0 && (
               <Alert severity="error" sx={{ mb: 3 }}>
                 {`Please fix ${errorCount} ${errorCount === 1 ? 'field' : 'fields'} before we can take your money.`}
+              </Alert>
+            )}
+            {couponNotice && (
+              <Alert severity="warning" sx={{ mb: 3 }}>
+                {couponNotice}
               </Alert>
             )}
             {state.status === 'failed' && (
@@ -260,7 +326,7 @@ export const CheckoutPage = () => {
               </Box>
             ))}
           </Box>
-          <CartSummary />
+          <CartSummary couponDisabled={processing} />
         </Paper>
       </Box>
 

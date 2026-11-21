@@ -7,15 +7,19 @@ import { routerFuture } from '../app/routerFuture';
 import { makeStore, type RootState } from '../app/store';
 import { createMockPaymentGateway } from '../features/checkout/payment/mockPaymentGateway';
 import type { PaymentGateway } from '../features/checkout/payment/PaymentGateway';
+import type { EmailTransport } from '../features/email/types';
 import { createMemoryStorage } from './memoryStorage';
 
 interface Options {
-  route?: string;
+  route?: string | { pathname: string; state?: unknown };
   preloadedState?: Partial<RootState>;
-  cartStorage?: Storage;
+  durableStorage?: Storage;
   authStorage?: Storage;
   paymentGateway?: PaymentGateway;
+  emailTransport?: EmailTransport;
 }
+
+export const TEST_APP_URL = 'https://shop.example.test/littlefish-e-store/';
 
 /** Renders with the real store, theme, contexts and router: integration, not shallow. */
 export const renderWithProviders = (
@@ -23,12 +27,13 @@ export const renderWithProviders = (
   {
     route = '/',
     preloadedState,
-    cartStorage = createMemoryStorage(),
+    durableStorage = createMemoryStorage(),
     authStorage = createMemoryStorage(),
     paymentGateway = createMockPaymentGateway({ latencyMs: 0 }),
+    emailTransport,
   }: Options = {},
 ) => {
-  const store = makeStore({ preloadedState, cartStorage, authStorage });
+  const store = makeStore({ preloadedState, durableStorage, authStorage, emailTransport, appUrl: TEST_APP_URL });
   const user = userEvent.setup();
   const result = render(
     <AppProviders store={store} paymentGateway={paymentGateway}>
@@ -37,5 +42,5 @@ export const renderWithProviders = (
       </MemoryRouter>
     </AppProviders>,
   );
-  return { ...result, store, user, cartStorage, authStorage };
+  return { ...result, store, user, durableStorage, authStorage };
 };

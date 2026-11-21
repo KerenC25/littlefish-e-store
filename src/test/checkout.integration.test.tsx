@@ -78,11 +78,11 @@ describe('Authentication and checkout (integration)', () => {
 
   it('takes a successful payment, shows a receipt and empties the cart', async () => {
     mockFetch();
-    const cartStorage = createMemoryStorage();
+    const durableStorage = createMemoryStorage();
     const { user, store } = renderWithProviders(<AppRoutes />, {
       route: '/checkout',
       preloadedState: { cart: cartWithTongs, auth: signedIn },
-      cartStorage,
+      durableStorage,
     });
     await screen.findByRole('heading', { name: 'Checkout' });
 
@@ -94,7 +94,7 @@ describe('Authentication and checkout (integration)', () => {
     expect(screen.getByText('Visa ending 4242')).toBeInTheDocument();
     expect(screen.getByText(/^LFM-[0-9A-F]{8}$/)).toBeInTheDocument();
     expect(store.getState().cart.ids).toEqual([]);
-    expect(JSON.parse(cartStorage.getItem(STORAGE_KEYS.cart) ?? '{}').items).toEqual([]);
+    expect(JSON.parse(durableStorage.getItem(STORAGE_KEYS.cart) ?? '{}').items).toEqual([]);
     expect(screen.getByRole('button', { name: 'Cart, empty' })).toBeInTheDocument();
   });
 

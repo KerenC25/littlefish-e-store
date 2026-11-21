@@ -15,11 +15,13 @@ interface AppProvidersProps {
   /** Injectable for tests; production builds its own once. */
   store?: AppStore;
   paymentGateway?: PaymentGateway;
+  /** Absolute app root URL (including the GitHub Pages base path), used in email links. */
+  appUrl?: string;
 }
 
 /** Composition root: every cross-cutting dependency is wired here and nowhere else. */
-export const AppProviders = ({ children, store: injectedStore, paymentGateway }: AppProvidersProps) => {
-  const [store] = useState(() => injectedStore ?? makeStore());
+export const AppProviders = ({ children, store: injectedStore, paymentGateway, appUrl }: AppProvidersProps) => {
+  const [store] = useState(() => injectedStore ?? makeStore({ appUrl }));
   const [gateway] = useState(() => paymentGateway ?? createMockPaymentGateway());
 
   return (
