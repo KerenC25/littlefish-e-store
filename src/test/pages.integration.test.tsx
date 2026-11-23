@@ -42,7 +42,7 @@ describe('Product detail page', () => {
     const heading = await screen.findByRole('heading', { level: 1, name: 'Braai Tongs' });
     expect(heading).toHaveFocus(); // announces the view change to screen-reader users
     expect(screen.getByText('Weber')).toBeInTheDocument();
-    expect(screen.getByText(/R\s?462,50/)).toBeInTheDocument();
+    expect(screen.getByText(/R\s?462,99/)).toBeInTheDocument();
     expect(screen.getByText(/Was/)).toBeInTheDocument(); // discount spoken, not just struck through
     expect(screen.getByText('3 in stock')).toBeInTheDocument();
     expect(within(screen.getByRole('list', { name: 'Tags' })).getAllByRole('listitem')).toHaveLength(2);
@@ -103,6 +103,14 @@ describe('Product detail page', () => {
     renderWithProviders(<AppRoutes />, { route: '/products/999' });
 
     expect(await screen.findByText('That one swam off')).toBeInTheDocument();
+  });
+
+  it('treats a grocery product (not stocked) as not found', async () => {
+    mockFetch(on('GET', '/products/20', () => apiProduct({ id: 20, title: 'Chicken Meat', category: 'groceries' })));
+    renderWithProviders(<AppRoutes />, { route: '/products/20' });
+
+    expect(await screen.findByText('That one swam off')).toBeInTheDocument();
+    expect(screen.queryByText('Chicken Meat')).not.toBeInTheDocument();
   });
 
   it.each(['abc', '0', '-1', '1.5'])('rejects the invalid id "%s" without calling the API', async (id) => {

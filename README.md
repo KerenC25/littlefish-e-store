@@ -117,7 +117,11 @@ src/
 - **Fonts:** Inter is self-hosted via `@fontsource`, Latin subset only.
 
 ### Advanced API integration (RTK Query)
-Pagination (`limit`/`skip`), sorting (`sortBy`/`order`), filtering (category, search), caching (per-argument cache entries, `keepUnusedDataFor`, tags, `refetchOnReconnect`), prefetching, and authenticated requests with transparent token refresh and retry.
+Server-side sorting (`sortBy`/`order`) and filtering (category, search), pagination, caching (per-argument cache entries, `keepUnusedDataFor`, tags, `refetchOnReconnect`), prefetching, and authenticated requests with transparent token refresh and retry.
+
+**Shelf prices end in ,99.** DummyJSON prices are converted from USD at a fixed rate, which gives odd cents (R184,82). `usdToZarCents` keeps the whole Rand amount and sets the cents to 99 (R184,99); "was" prices follow the same rule and always stay above the current price. Totals, coupon discounts and VAT are still exact sums in integer cents, so they will not always end in ,99.
+
+**Groceries are not stocked.** DummyJSON cannot exclude a category, and dropping groceries from each server page (`limit`/`skip`) would leave short pages and a wrong product count. So the list asks the API for everything matching the current search, category and sort (`limit=0`, listing fields only, under 200 rows), removes hidden categories (`HIDDEN_CATEGORIES` in `src/shared/config.ts`), and cuts pages locally. It is two endpoints: `getProductSet` caches one request per filter combination, and `getProducts` builds each page from it, so changing page never hits the network. Groceries are also removed from categories, brands and hero stats, and their product pages show "not found". With a real catalogue API I would filter on the server and go back to server-side paging.
 
 ### Testing
 **213 tests across 21 suites, covering 97.7% of lines and 85.3% of branches** (`npm run test:coverage`). The suites cover:
@@ -194,7 +198,7 @@ The tokens live in [`src/app/theme.ts`](src/app/theme.ts), and every text pairin
 - Scroll-snap, with arrow buttons on larger screens.
 - An **A–Z directory** dialog with search and letter jump links.
 
-DummyJSON has no brand filter, so the full catalogue (194 products, listing fields only) is fetched once and cached for 10 minutes. Brands, brand filtering, sorting and paging are then derived client-side by pure, unit-tested functions in [`src/features/products/brands.ts`](src/features/products/brands.ts). The same cached request feeds the hero stats. Brand, category and search are mutually exclusive, which the reducer enforces. If the catalogue request fails, the rail hides and the rest of the shop keeps working.
+DummyJSON has no brand filter, so the full catalogue (listing fields only, groceries removed) is fetched once and cached for 10 minutes. Brands, brand filtering, sorting and paging are then derived client-side by pure, unit-tested functions in [`src/features/products/brands.ts`](src/features/products/brands.ts). The same cached request feeds the hero stats. Brand, category and search are mutually exclusive, which the reducer enforces. If the catalogue request fails, the rail hides and the rest of the shop keeps working.
 
 ## Coupons, orders, email and newsletter
 

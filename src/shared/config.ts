@@ -19,6 +19,12 @@ export const SHIPPING_FEE_CENTS = 99_00;
 /** South African VAT rate. Prices are VAT-inclusive, as is standard for SA retail. */
 export const VAT_RATE = 0.15;
 
+/**
+ * DummyJSON categories the shop does not stock. Hidden from listings, search, brands,
+ * categories and the hero stats; their product pages show "not found".
+ */
+export const HIDDEN_CATEGORIES: readonly string[] = ['groceries'];
+
 export const PAGE_SIZE_OPTIONS = [12, 24, 48, 100] as const;
 export const DEFAULT_PAGE_SIZE = 24;
 

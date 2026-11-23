@@ -23,7 +23,7 @@ describe('cartSlice', () => {
   it('adds items as normalised entities', () => {
     const state = reduce(itemAdded({ product: tea }), itemAdded({ product: tongs, quantity: 2 }));
     expect(state.ids).toEqual([1, 2]);
-    expect(state.entities[2]).toMatchObject({ title: 'Tongs', quantity: 2, unitPriceCents: 370_00 });
+    expect(state.entities[2]).toMatchObject({ title: 'Tongs', quantity: 2, unitPriceCents: 370_99 });
   });
 
   it('merges repeat adds into one line and never exceeds stock', () => {
@@ -68,18 +68,18 @@ describe('cartSlice', () => {
 
   describe('calculateTotals', () => {
     it('charges delivery below the free-shipping threshold', () => {
-      const items = reduce(itemAdded({ product: tea })); // R185
+      const items = reduce(itemAdded({ product: tea })); // R185,99
       const totals = calculateTotals(selectCartItems({ cart: items }));
-      expect(totals).toMatchObject({ subtotalCents: 185_00, shippingCents: 99_00, totalCents: 284_00 });
-      expect(totals.freeShippingRemainingCents).toBe(815_00);
+      expect(totals).toMatchObject({ subtotalCents: 185_99, shippingCents: 99_00, totalCents: 284_99 });
+      expect(totals.freeShippingRemainingCents).toBe(814_01);
     });
 
     it('ships free at or above the threshold, and VAT is included', () => {
-      const items = reduce(itemAdded({ product: tongs, quantity: 3 })); // R1110
+      const items = reduce(itemAdded({ product: tongs, quantity: 3 })); // 3 x R370,99
       const totals = calculateTotals(selectCartItems({ cart: items }));
       expect(totals.shippingCents).toBe(0);
-      expect(totals.totalCents).toBe(1_110_00);
-      expect(totals.vatCents).toBe(144_78);
+      expect(totals.totalCents).toBe(1_112_97);
+      expect(totals.vatCents).toBe(145_17);
     });
 
     it('charges nothing for an empty cart', () => {

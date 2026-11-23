@@ -1,5 +1,7 @@
 import { createEntityAdapter } from '@reduxjs/toolkit';
+import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 import { api } from '../../services/api';
+import { HIDDEN_CATEGORIES } from '../../shared/config';
 import { SORT_TO_API, toCategory, toProduct, toProductDetail } from './mappers';
 import type {
   ApiCategory,
@@ -28,16 +30,25 @@ const LIST_FIELDS = [
 export const productsAdapter = createEntityAdapter<Product>();
 export const productSelectors = productsAdapter.getSelectors();
 
+/** Whether the shop sells this category at all (groceries are not stocked). */
+export const isListedCategory = (slug: string): boolean => !HIDDEN_CATEGORIES.includes(slug);
+export const isListed = (product: { category: string }): boolean => isListedCategory(product.category);
+
+/** What decides *which* products match; paging is applied afterwards. */
+export type ProductSetArgs = Pick<ProductsQueryArgs, 'sort' | 'category' | 'search'>;
+
 /**
- * Builds the request URL. DummyJSON exposes search and category as separate resources and
- * cannot combine them, which is why the catalog slice treats them as mutually exclusive.
+ * Builds the request URL for every product matching the filters (`limit=0`), sorted by the
+ * API. DummyJSON exposes search and category as separate resources and cannot combine them,
+ * which is why the catalog slice treats them as mutually exclusive.
+ *
+ * Why the whole set and not one server page: DummyJSON cannot exclude a category, so hidden
+ * categories have to be removed here. Removing them from a server page would leave short
+ * pages and a wrong total; removing them from the full (small, listing-fields-only) set and
+ * paging afterwards keeps both exact.
  */
-export const buildProductsUrl = ({ page, pageSize, sort, category, search }: ProductsQueryArgs): string => {
-  const params = new URLSearchParams({
-    limit: String(pageSize),
-    skip: String((page - 1) * pageSize),
-    select: LIST_FIELDS,
-  });
+export const buildProductSetUrl = ({ sort, category, search }: ProductSetArgs): string => {
+  const params = new URLSearchParams({ limit: '0', select: LIST_FIELDS });
   const { sortBy, order } = SORT_TO_API[sort];
   if (sortBy && order) {
     params.set('sortBy', sortBy);
@@ -53,16 +64,49 @@ export const buildProductsUrl = ({ page, pageSize, sort, category, search }: Pro
   return `/products?${params.toString()}`;
 };
 
-export const productsApi = api.injectEndpoints({
+/** One page of an already filtered and sorted list, normalised into `{ ids, entities }`. */
+export const toProductPage = (products: readonly Product[], page: number, pageSize: number): ProductPage => {
+  const start = (page - 1) * pageSize;
+  return {
+    ...productsAdapter.setAll(productsAdapter.getInitialState(), products.slice(start, start + pageSize)),
+    total: products.length,
+  };
+};
+
+const listedProducts = (response: ApiProductPage): Product[] => response.products.map(toProduct).filter(isListed);
+
+/** The unfiltered, unsorted catalogue: what the brand rail and hero stats are built from. */
+const ALL_PRODUCTS: ProductSetArgs = { sort: 'featured', category: null, search: '' };
+
+/** Step 1: the matching set, cached per filter combination (shared by every page of it). */
+const productSetApi = api.injectEndpoints({
   endpoints: (build) => ({
+    getProductSet: build.query<Product[], ProductSetArgs>({
+      query: buildProductSetUrl,
+      transformResponse: listedProducts,
+      providesTags: [{ type: 'Product', id: 'LIST' }],
+    }),
+  }),
+});
+
+export const productsApi = productSetApi.injectEndpoints({
+  endpoints: (build) => ({
+    /**
+     * Step 2: a page of that set. Pages are cut locally, so moving between pages of the same
+     * search, category and sort never goes back to the network.
+     */
     getProducts: build.query<ProductPage, ProductsQueryArgs>({
-      query: buildProductsUrl,
-      // Normalise into `{ ids, entities }` so lookups by id are O(1) and rows can
-      // subscribe to a single entity without re-rendering the whole list.
-      transformResponse: (response: ApiProductPage): ProductPage => ({
-        ...productsAdapter.setAll(productsAdapter.getInitialState(), response.products.map(toProduct)),
-        total: response.total,
-      }),
+      async queryFn({ page, pageSize, sort, category, search }, { dispatch }) {
+        const request = dispatch(productSetApi.endpoints.getProductSet.initiate({ sort, category, search }));
+        try {
+          const result = await request;
+          if (result.error) return { error: result.error as FetchBaseQueryError };
+          return { data: toProductPage(result.data ?? [], page, pageSize) };
+        } finally {
+          // The set stays cached for keepUnusedDataFor; we only needed it to build this page.
+          request.unsubscribe();
+        }
+      },
       providesTags: (result) => [
         { type: 'Product' as const, id: 'LIST' },
         ...(result?.ids ?? []).map((id) => ({ type: 'Product' as const, id })),
@@ -73,19 +117,33 @@ export const productsApi = api.injectEndpoints({
      * stats and brand results, so it is fetched once and cached for 10 minutes.
      */
     getCatalogIndex: build.query<Product[], void>({
-      query: () => `/products?limit=0&select=${LIST_FIELDS}`,
-      transformResponse: (response: ApiProductPage) => response.products.map(toProduct),
+      // Same request as the unfiltered list, so it is made once and shared with page 1.
+      async queryFn(_arg, { dispatch }) {
+        const request = dispatch(productSetApi.endpoints.getProductSet.initiate(ALL_PRODUCTS));
+        try {
+          const result = await request;
+          return result.error ? { error: result.error as FetchBaseQueryError } : { data: result.data ?? [] };
+        } finally {
+          request.unsubscribe();
+        }
+      },
       providesTags: [{ type: 'Product', id: 'INDEX' }],
       keepUnusedDataFor: 600,
     }),
     getProduct: build.query<ProductDetail, number>({
-      query: (id) => `/products/${id}`,
-      transformResponse: (response: ApiProduct) => toProductDetail(response),
+      async queryFn(id, _api, _extra, baseQuery) {
+        const result = await baseQuery(`/products/${id}`);
+        if (result.error) return { error: result.error };
+        const product = toProductDetail(result.data as ApiProduct);
+        // A direct link to something we do not stock gets the same answer as a missing one.
+        if (!isListed(product)) return { error: { status: 404, data: { message: 'Product not found' } } };
+        return { data: product };
+      },
       providesTags: (_result, _error, id) => [{ type: 'Product', id }],
     }),
     getCategories: build.query<Category[], void>({
       query: () => '/products/categories',
-      transformResponse: (response: ApiCategory[]) => response.map(toCategory),
+      transformResponse: (response: ApiCategory[]) => response.map(toCategory).filter((c) => isListedCategory(c.slug)),
       providesTags: ['Category'],
       // Categories almost never change; keep them for an hour.
       keepUnusedDataFor: 3600,

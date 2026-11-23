@@ -1,6 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import { axe } from 'jest-axe';
 import { AppRoutes } from '../app/AppRoutes';
+import { initialCatalogState } from '../features/products/catalogSlice';
 import { apiProduct, productPage } from './fixtures';
 import { mockFetch, on } from './mockFetch';
 import { renderWithProviders } from './renderWithProviders';
@@ -114,13 +115,13 @@ describe('Shop by brand (integration)', () => {
   });
 
   it('hides the rail, but keeps the shop working, if the catalogue index fails', async () => {
+    // The unfiltered catalogue (which the rail is built from) fails; a category list still works.
     mockFetch(
       on('GET', '/products/categories', () => []),
-      on('GET', '/products', (req) =>
-        req.url.searchParams.get('limit') === '0' ? { status: 500, body: {} } : productPage(catalogue),
-      ),
+      on('GET', '/products', () => ({ status: 500, body: {} })),
+      on('GET', '/products/category/beauty', () => productPage(catalogue)),
     );
-    renderWithProviders(<AppRoutes />);
+    renderWithProviders(<AppRoutes />, { preloadedState: { catalog: { ...initialCatalogState, category: 'beauty' } } });
 
     expect(await screen.findByRole('link', { name: 'Rooibos Tea Tin' })).toBeInTheDocument();
     await waitFor(() => expect(screen.queryByRole('region', { name: 'Shop by brand' })).not.toBeInTheDocument());

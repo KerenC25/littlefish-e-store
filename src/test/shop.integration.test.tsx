@@ -31,7 +31,7 @@ describe('Shop (integration)', () => {
     expect(within(list).getAllByRole('listitem')).toHaveLength(3);
     expect(screen.getByText('Showing 1–3 of 3 products')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Vetkoek Pan: Sold out' })).toBeDisabled();
-    expect(screen.getAllByText(/R\s?185,00/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/R\s?185,99/).length).toBeGreaterThan(0);
   });
 
   it('keeps the header badge, product buttons and cart modal in sync', async () => {
