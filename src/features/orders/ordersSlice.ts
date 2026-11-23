@@ -1,5 +1,6 @@
 import { createEntityAdapter, createSelector, createSlice, type EntityState, type PayloadAction } from '@reduxjs/toolkit';
 import { normaliseEmail } from '../../shared/utils/validation';
+import type { UserId } from '../auth/types';
 import type { Order } from './types';
 
 /** Newest first. Keyed by order reference. */
@@ -38,7 +39,7 @@ export const selectOrderByReference = (state: StateWithOrders, reference: string
   selectors.selectById(state, reference.trim().toUpperCase());
 
 export const selectOrdersForUser = createSelector(
-  [selectAllOrders, (_state: StateWithOrders, userId: number | null | undefined) => userId],
+  [selectAllOrders, (_state: StateWithOrders, userId: UserId | null | undefined) => userId],
   (orders, userId) => (userId == null ? [] : orders.filter((o) => o.userId === userId)),
 );
 

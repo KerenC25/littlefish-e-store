@@ -35,8 +35,14 @@ jobs:
       - name: Test
         run: npm test -- --ci
 
+      # Sign-up uses Supabase Auth. Both values are public, browser-safe settings, kept as repo
+      # *variables* (Settings > Secrets and variables > Actions > Variables). If they are not set,
+      # the site still builds and the Register page says sign-up is switched off.
       - name: Build for /littlefish-e-store/
         run: npm run build -- --base=/littlefish-e-store/
+        env:
+          VITE_SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.SUPABASE_ANON_KEY }}
 
       # GitHub Pages has no SPA rewrites: serve the app for unknown paths so deep links
       # like /littlefish-e-store/checkout load instead of returning GitHub's 404 page.

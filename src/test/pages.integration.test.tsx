@@ -176,7 +176,18 @@ describe('Accessibility (axe) across every route', () => {
     mockFetch();
     const { container, user } = renderWithProviders(<AppRoutes />, { route: '/login' });
     await user.click(await screen.findByRole('button', { name: 'Sign in' }));
-    expect(screen.getByText('Enter your username')).toBeInTheDocument();
+    expect(screen.getByText('Enter your email or username')).toBeInTheDocument();
+    expect(await axe(container)).toHaveNoViolations();
+  });
+
+  axeIt('register page, before and after a failed submit', async () => {
+    mockFetch();
+    const { container, user } = renderWithProviders(<AppRoutes />, { route: '/register' });
+    await screen.findByRole('heading', { name: 'Create an account' });
+    expect(await axe(container)).toHaveNoViolations();
+
+    await user.click(screen.getByRole('button', { name: 'Create account' }));
+    expect(screen.getByText('Enter your first name')).toBeInTheDocument();
     expect(await axe(container)).toHaveNoViolations();
   });
 

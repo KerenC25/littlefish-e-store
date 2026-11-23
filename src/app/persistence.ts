@@ -49,7 +49,7 @@ const isOrder = (v: unknown): v is Order => {
   return (
     isNonEmptyString(v.reference, 40) &&
     isIsoDate(v.placedAt) &&
-    (v.userId === null || isFiniteNumber(v.userId)) &&
+    (v.userId === null || isFiniteNumber(v.userId) || isNonEmptyString(v.userId, 64)) &&
     isNonEmptyString(v.email, 254) &&
     typeof v.customerName === 'string' &&
     typeof v.phone === 'string' &&

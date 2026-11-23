@@ -7,6 +7,7 @@ import { ProductsPage } from '../features/products/ProductsPage';
 // The landing page ships in the main bundle; everything else is loaded on demand.
 const ProductDetailPage = lazy(() => import('../features/products/ProductDetailPage'));
 const LoginPage = lazy(() => import('../features/auth/LoginPage'));
+const RegisterPage = lazy(() => import('../features/auth/RegisterPage'));
 const CheckoutPage = lazy(() => import('../features/checkout/CheckoutPage'));
 const OrdersPage = lazy(() => import('../features/orders/OrdersPage'));
 const OrderTrackingPage = lazy(() => import('../features/orders/OrderTrackingPage'));
@@ -20,6 +21,7 @@ export const AppRoutes = () => (
       <Route index element={<ProductsPage />} />
       <Route path="products/:productId" element={<ProductDetailPage />} />
       <Route path="login" element={<LoginPage />} />
+      <Route path="register" element={<RegisterPage />} />
       <Route
         path="checkout"
         element={

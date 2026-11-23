@@ -54,7 +54,7 @@ describe('Authentication and checkout (integration)', () => {
     mockFetch(on('POST', '/auth/login', () => ({ status: 400, body: { message: 'Invalid credentials' } })));
     const { user } = renderWithProviders(<AppRoutes />, { route: '/login' });
 
-    await user.type(await screen.findByRole('textbox', { name: /Username/ }), 'emilys');
+    await user.type(await screen.findByRole('textbox', { name: /Email or username/ }), 'emilys');
     await user.type(screen.getByLabelText(/Password/, { selector: 'input' }), 'wrong');
     await user.click(screen.getByRole('button', { name: 'Sign in' }));
 

@@ -1,20 +1,20 @@
 import { useState, type FormEvent } from 'react';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Link as RouterLink, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import IconButton from '@mui/material/IconButton';
-import InputAdornment from '@mui/material/InputAdornment';
+import Link from '@mui/material/Link';
 import Paper from '@mui/material/Paper';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import Visibility from '@mui/icons-material/Visibility';
-import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import { useAppSelector } from '../../app/hooks';
+import { useSignInWithEmailMutation } from '../../services/supabaseAuthApi';
 import { useNotify } from '../../shared/notifications/NotificationsContext';
 import { getErrorMessage } from '../../shared/utils/errors';
 import { useLoginMutation } from './authApi';
 import { selectIsAuthenticated } from './authSlice';
+import { PasswordField } from './components/PasswordField';
+import { authErrorMessage } from './supabaseMappers';
 
 /** Only allow redirects to in-app paths, never to another origin (open-redirect guard). */
 export const safeRedirectPath = (from: unknown): string =>
@@ -22,34 +22,54 @@ export const safeRedirectPath = (from: unknown): string =>
 
 export const DEMO_CREDENTIALS = { username: 'emilys', password: 'emilyspass' } as const;
 
+/** Registered customers sign in with their email; the demo account uses a DummyJSON username. */
+export const isEmailIdentifier = (identifier: string): boolean => identifier.includes('@');
+
 export const LoginPage = () => {
-  const [login, { isLoading, error }] = useLoginMutation();
+  const [login, demoLogin] = useLoginMutation();
+  const [signInWithEmail, emailLogin] = useSignInWithEmailMutation();
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
   const navigate = useNavigate();
   const location = useLocation();
   const notify = useNotify();
   const redirectTo = safeRedirectPath((location.state as { from?: unknown } | null)?.from);
 
-  const [username, setUsername] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [touched, setTouched] = useState(false);
+  const [method, setMethod] = useState<'demo' | 'email' | null>(null);
 
   if (isAuthenticated) return <Navigate to={redirectTo} replace />;
 
-  const usernameError = touched && username.trim() === '' ? 'Enter your username' : '';
+  const isLoading = demoLogin.isLoading || emailLogin.isLoading;
+  const identifierError = touched && identifier.trim() === '' ? 'Enter your email or username' : '';
   const passwordError = touched && password === '' ? 'Enter your password' : '';
+
+  const errorMessage =
+    method === 'email' && emailLogin.error
+      ? authErrorMessage(emailLogin.error, 'Those details did not work. Please try again.')
+      : method === 'demo' && demoLogin.error
+        ? getErrorMessage(demoLogin.error, 'Those details did not work. Please try again.')
+        : null;
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setTouched(true);
-    if (!username.trim() || !password) return;
+    const trimmed = identifier.trim();
+    if (!trimmed || !password) return;
     try {
-      const user = await login({ username, password }).unwrap();
-      notify(`Howzit, ${user.firstName}. You are signed in.`);
+      let firstName: string;
+      if (isEmailIdentifier(trimmed)) {
+        setMethod('email');
+        firstName = (await signInWithEmail({ email: trimmed, password }).unwrap()).user.firstName;
+      } else {
+        setMethod('demo');
+        firstName = (await login({ username: trimmed, password }).unwrap()).firstName;
+      }
+      notify(`Howzit, ${firstName}. You are signed in.`);
       navigate(redirectTo, { replace: true });
     } catch {
-      // Rendered below from the mutation's `error`. Clear the password, keep the username.
+      // Rendered below from the mutation's `error`. Clear the password, keep the identifier.
       setPassword('');
     }
   };
@@ -64,56 +84,42 @@ export const LoginPage = () => {
           Sign in to check out. No queue, no ticket number, no security question about your first pet.
         </Typography>
 
-        {error && (
+        {errorMessage && (
           <Alert severity="error" sx={{ mb: 2 }} role="alert">
-            {getErrorMessage(error, 'Those details did not work. Please try again.')}
+            {errorMessage}
           </Alert>
         )}
 
         <Box component="form" noValidate onSubmit={handleSubmit} sx={{ display: 'grid', gap: 2 }}>
           <TextField
-            label="Username"
+            label="Email or username"
             name="username"
             autoComplete="username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            error={Boolean(usernameError)}
-            helperText={usernameError || ' '}
+            value={identifier}
+            onChange={(e) => setIdentifier(e.target.value)}
+            error={Boolean(identifierError)}
+            helperText={identifierError || ' '}
             required
-            slotProps={{ htmlInput: { maxLength: 64, autoCapitalize: 'none', spellCheck: false } }}
+            slotProps={{ htmlInput: { maxLength: 254, autoCapitalize: 'none', spellCheck: false } }}
           />
-          <TextField
+          <PasswordField
             label="Password"
-            name="password"
-            type={showPassword ? 'text' : 'password'}
             autoComplete="current-password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            error={Boolean(passwordError)}
-            helperText={passwordError || ' '}
-            required
-            slotProps={{
-              htmlInput: { maxLength: 128 },
-              input: {
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      onClick={() => setShowPassword((v) => !v)}
-                      aria-label={showPassword ? 'Hide password' : 'Show password'}
-                      aria-pressed={showPassword}
-                      edge="end"
-                    >
-                      {showPassword ? <VisibilityOff aria-hidden /> : <Visibility aria-hidden />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              },
-            }}
+            onChange={setPassword}
+            error={passwordError}
           />
           <Button type="submit" variant="contained" size="large" disabled={isLoading}>
             {isLoading ? 'Signing in…' : 'Sign in'}
           </Button>
         </Box>
+
+        <Typography sx={{ mt: 3 }}>
+          New here?{' '}
+          <Link component={RouterLink} to="/register" state={{ from: redirectTo }}>
+            Create an account
+          </Link>
+        </Typography>
 
         {/* Static hint, not an urgent message: override Alert's default role="alert". */}
         <Alert severity="info" variant="outlined" role="note" sx={{ mt: 3 }}>
@@ -122,7 +128,7 @@ export const LoginPage = () => {
           <Button
             size="small"
             onClick={() => {
-              setUsername(DEMO_CREDENTIALS.username);
+              setIdentifier(DEMO_CREDENTIALS.username);
               setPassword(DEMO_CREDENTIALS.password);
             }}
             sx={{ ml: 1 }}

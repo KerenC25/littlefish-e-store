@@ -29,4 +29,5 @@ export const STORAGE_KEYS = {
   outbox: 'lfm.outbox.v1',
   newsletter: 'lfm.newsletter.v1',
   refreshToken: 'lfm.auth.refresh.v1',
+  authProvider: 'lfm.auth.provider.v1',
 } as const;

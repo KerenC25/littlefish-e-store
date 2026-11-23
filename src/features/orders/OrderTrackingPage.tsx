@@ -14,6 +14,7 @@ import { formatZar } from '../../shared/utils/money';
 import { normaliseEmail } from '../../shared/utils/validation';
 import { visuallyHidden } from '../../shared/styles/visuallyHidden';
 import { selectCurrentUser } from '../auth/authSlice';
+import type { UserId } from '../auth/types';
 import { selectOrderByReference } from './ordersSlice';
 import { trackOrder } from './tracking';
 import { OrderStatusChip } from './components/OrderStatusChip';
@@ -23,8 +24,8 @@ const dateTime = new Intl.DateTimeFormat('en-ZA', { dateStyle: 'medium', timeSty
 
 /** Who may see an order: its signed-in owner, or someone who just proved the email on /track. */
 export const canViewOrder = (
-  order: { userId: number | null; email: string },
-  userId: number | undefined,
+  order: { userId: UserId | null; email: string },
+  userId: UserId | undefined,
   verifiedEmail: unknown,
 ): boolean =>
   (userId !== undefined && order.userId === userId) ||

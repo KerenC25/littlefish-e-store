@@ -8,7 +8,8 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import { useNotify } from '../../../shared/notifications/NotificationsContext';
-import { loggedOut, selectCurrentUser } from '../authSlice';
+import { selectCurrentUser } from '../authSlice';
+import { signOut } from '../authThunks';
 
 export const UserMenu = () => {
   const user = useAppSelector(selectCurrentUser);
@@ -55,7 +56,7 @@ export const UserMenu = () => {
         <MenuItem
           onClick={() => {
             setAnchor(null);
-            dispatch(loggedOut());
+            void dispatch(signOut());
             notify('Signed out. Totsiens for now.', 'info');
           }}
         >

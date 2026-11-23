@@ -16,11 +16,14 @@ interface StateWithAuth {
 const rawBaseQuery = fetchBaseQuery({
   baseUrl: API_BASE_URL,
   prepareHeaders: (headers, { getState }) => {
-    const token = (getState() as StateWithAuth).auth.accessToken;
-    if (token) headers.set('Authorization', `Bearer ${token}`);
+    const { accessToken, provider } = (getState() as StateWithAuth).auth;
+    // A Supabase token is meant for Supabase only: never hand it to a third-party API.
+    if (accessToken && isDummyJsonSession(provider)) headers.set('Authorization', `Bearer ${accessToken}`);
     return headers;
   },
 });
+
+const isDummyJsonSession = (provider: AuthState['provider']): boolean => provider === undefined || provider === 'dummyjson';
 
 const isRefreshResponse = (data: unknown): data is RefreshResponse =>
   typeof data === 'object' &&
@@ -44,8 +47,8 @@ export const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, Fetch
   let result = await rawBaseQuery(args, api, extraOptions);
   if (result.error?.status !== 401) return result;
 
-  const { refreshToken } = (api.getState() as StateWithAuth).auth;
-  if (!refreshToken) return result;
+  const { refreshToken, provider } = (api.getState() as StateWithAuth).auth;
+  if (!refreshToken || !isDummyJsonSession(provider)) return result;
 
   if (!refreshInFlight) {
     refreshInFlight = (async () => {

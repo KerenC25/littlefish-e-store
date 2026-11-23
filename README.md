@@ -29,7 +29,16 @@ npm run dev          # http://localhost:5173
 | `npm run lint` | ESLint, including `jsx-a11y` and React Hooks rules |
 | `npm run typecheck` | TypeScript only |
 
-**API keys and configuration:** none needed. DummyJSON is public. All settings (API URL, exchange rate, delivery threshold, VAT, page sizes) are in [`src/shared/config.ts`](src/shared/config.ts).
+**API keys and configuration:** none needed to run the shop. DummyJSON is public. All settings (API URL, exchange rate, delivery threshold, VAT, page sizes) are in [`src/shared/config.ts`](src/shared/config.ts).
+
+**Optional: switch on sign-up (Supabase Auth).** Without this, everything works with the demo account and the Register page explains that sign-up is off.
+
+1. Create a free project at [supabase.com](https://supabase.com). No tables are needed; only Auth is used.
+2. In **Authentication > URL Configuration**, set the Site URL to your app root and add it to Redirect URLs (for example `http://localhost:5173/` and `https://<user>.github.io/littlefish-e-store/`). Confirmation links land there.
+3. Copy `.env.example` to `.env.local` and fill in the project URL and **anon** key from **Project Settings > API**. Never use the `service_role` key in the browser.
+4. For the deployed site, add the same two values as repository **variables** `SUPABASE_URL` and `SUPABASE_ANON_KEY` (Settings > Secrets and variables > Actions > Variables), then re-run the deploy.
+
+"Confirm email" is on by default in Supabase. With it on, new customers get a link and are signed in when they click it. Turn it off (Authentication > Sign In / Providers > Email) for instant sign-up while demoing.
 
 ### Deployment
 
@@ -42,7 +51,7 @@ Every push to `main` runs [`.github/workflows/deploy.yml`](.github/workflows/dep
 | Username | `emilys` |
 | Password | `emilyspass` |
 
-The sign-in page has a **Fill in** button for these.
+The sign-in page has a **Fill in** button for these. Customers who registered sign in on the same form with their email; the form sends anything containing `@` to Supabase and anything else to the DummyJSON demo login.
 
 ### Test cards (simulated gateway)
 
@@ -111,15 +120,20 @@ src/
 Pagination (`limit`/`skip`), sorting (`sortBy`/`order`), filtering (category, search), caching (per-argument cache entries, `keepUnusedDataFor`, tags, `refetchOnReconnect`), prefetching, and authenticated requests with transparent token refresh and retry.
 
 ### Testing
-**183 tests across 19 suites, covering 97.1% of lines and 86.0% of branches** (`npm run test:coverage`). The suites cover:
+**213 tests across 21 suites, covering 97.7% of lines and 85.3% of branches** (`npm run test:coverage`). The suites cover:
 - **Redux store:** reducers and selectors (`cartSlice`, `catalogSlice`), memoisation, and persistence through the real store and listener middleware, including tampered storage and storage that throws.
 - **Async actions:** RTK Query endpoints against a mocked `fetch` (normalisation, ZAR conversion, cache hits, per-page caching, error state). Also `baseQueryWithReauth` (401 → refresh → retry, failed refresh → logout and storage cleared) and the session-restore thunk.
 - **Component interactions (integration):** the real store, router, theme and contexts rendered together. Covers browsing, filtering, sorting, debounced search, add/increase/remove in the cart modal, focus returning after Escape, error/retry and empty states, the sign-in redirect and return, form validation with focus on the first invalid field, and successful, declined and 3-D Secure payments.
+- **Sign-up and email sign-in:** register (instant sign-in, "check your inbox", local validation with focus, friendly server errors, sign-up switched off, non-HTTPS URL refused), email vs username routing on the sign-in form, Supabase session restore and rejection, sign-out revoking the session, the confirmation link (tokens wiped from the URL, expired and forged links), and a check that Supabase tokens are never sent to DummyJSON.
 - **Pages:** the product detail page (rendering, focus on load, image gallery, add to cart, sold-out state, not found, invalid ids rejected without an API call, error and retry, back link) and the 404 route.
-- **Accessibility:** `jest-axe` runs on **every route**: catalogue, open cart dialog, product detail, sign-in (clean and with validation errors), checkout (before and after a failed submit) and 404. It caught two real issues during development, both now fixed: a skipped heading level on product cards, and the checkout summary being an `<aside>` nested inside `<main>`.
+- **Accessibility:** `jest-axe` runs on **every route**: catalogue, open cart dialog, product detail, sign-in (clean and with validation errors), register (clean and with validation errors), checkout (before and after a failed submit) and 404. It caught two real issues during development, both now fixed: a skipped heading level on product cards, and the checkout summary being an `<aside>` nested inside `<main>`.
 
 ### Security and authentication
-- **Real authentication** against DummyJSON's JWT endpoints (`/auth/login`, `/auth/refresh`, `/auth/me`).
+- **Real authentication** against DummyJSON's JWT endpoints (`/auth/login`, `/auth/refresh`, `/auth/me`) for the demo account, and **Supabase Auth** for sign-up and email sign-in (`/signup`, `/token`, `/user`, `/logout`), called through RTK Query with no extra SDK.
+- **Two issuers, kept apart:** the session records which provider issued it. Supabase tokens go to a separate API slice and are never attached to DummyJSON requests, and each refresh token is only ever sent back to its own issuer.
+- **Sign-up:** passwords need 8+ characters with a letter and a number, capped at 72 bytes (bcrypt's limit). Email is normalised before sending. For an address that already exists, Supabase returns the same "check your inbox" response as for a new one, so the form cannot be used to find out who has an account. Server error codes map to friendly messages; raw server text is never shown.
+- **Confirmation links:** Supabase returns the new session in the URL fragment. It is removed from the address bar before anything else runs, then checked by loading the profile with it before it is trusted. Expired or forged links show an error and sign nobody in.
+- **Sign-out** clears the local session at once and revokes the Supabase refresh token server-side (best effort).
 - **Token handling:** the access token lives **in memory only**. The refresh token is stored in `sessionStorage` so a reload can restore the session, and it is cleared when the tab closes or the user signs out. In production I would move the refresh token into an `httpOnly`, `Secure`, `SameSite` cookie set by the server, so script can never read it.
 - **Authorisation:** `RequireAuth` guards `/checkout` and supports role checks (`roles` prop). It is a UX guard, not the security boundary; the API must enforce the same rules.
 - **Open-redirect guard:** after sign-in we only redirect to same-origin paths (`safeRedirectPath`).

@@ -1,4 +1,5 @@
 import type { Cents } from '../../shared/utils/money';
+import type { UserId } from '../auth/types';
 
 export interface OrderLine {
   productId: number;
@@ -32,7 +33,8 @@ export interface Order {
   reference: string;
   /** ISO date-time. */
   placedAt: string;
-  userId: number | null;
+  /** DummyJSON (number) or Supabase (UUID string) user id; null for guests. */
+  userId: UserId | null;
   customerName: string;
   email: string;
   phone: string;

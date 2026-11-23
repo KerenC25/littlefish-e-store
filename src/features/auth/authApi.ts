@@ -29,6 +29,7 @@ export const authApi = api.injectEndpoints({
               user: toUser(data),
               accessToken: data.accessToken,
               refreshToken: data.refreshToken,
+              provider: 'dummyjson',
             }),
           );
         } catch {

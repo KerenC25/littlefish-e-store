@@ -6,6 +6,12 @@ module.exports = {
   // default, and shared CI runners can be several times slower than a laptop.
   testTimeout: 60000,
   setupFiles: ['<rootDir>/src/test/polyfills.ts'],
+  // Stand-ins for the values Vite `define` injects at build time. Sign-up is on in tests;
+  // individual tests switch it off by blanking these.
+  globals: {
+    __LFM_SUPABASE_URL__: 'https://test-project.supabase.co',
+    __LFM_SUPABASE_ANON_KEY__: 'test-anon-key',
+  },
   setupFilesAfterEnv: ['<rootDir>/src/test/setupTests.ts'],
   transform: {
     '^.+\\.tsx?$': [
