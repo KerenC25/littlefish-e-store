@@ -64,6 +64,27 @@ export const buildProductSetUrl = ({ sort, category, search }: ProductSetArgs): 
   return `/products?${params.toString()}`;
 };
 
+/**
+ * Category views are paged by the server (`limit`/`skip`). A listed category can never
+ * contain hidden products, so every server page is already complete and its total exact.
+ */
+export const usesServerPaging = ({ category, search }: Pick<ProductsQueryArgs, 'category' | 'search'>): boolean =>
+  category !== null && search.trim() === '';
+
+export const buildCategoryPageUrl = ({ page, pageSize, sort, category }: ProductsQueryArgs): string => {
+  const params = new URLSearchParams({
+    limit: String(pageSize),
+    skip: String((page - 1) * pageSize),
+    select: LIST_FIELDS,
+  });
+  const { sortBy, order } = SORT_TO_API[sort];
+  if (sortBy && order) {
+    params.set('sortBy', sortBy);
+    params.set('order', order);
+  }
+  return `/products/category/${encodeURIComponent(category ?? '')}?${params.toString()}`;
+};
+
 /** One page of an already filtered and sorted list, normalised into `{ ids, entities }`. */
 export const toProductPage = (products: readonly Product[], page: number, pageSize: number): ProductPage => {
   const start = (page - 1) * pageSize;
@@ -92,11 +113,27 @@ const productSetApi = api.injectEndpoints({
 export const productsApi = productSetApi.injectEndpoints({
   endpoints: (build) => ({
     /**
-     * Step 2: a page of that set. Pages are cut locally, so moving between pages of the same
-     * search, category and sort never goes back to the network.
+     * Category views: one server page per request (`limit`/`skip`), cached per page.
+     * Everything else (all products, search): a page of the cached matching set, cut locally,
+     * because those are the only lists that can contain hidden categories.
      */
     getProducts: build.query<ProductPage, ProductsQueryArgs>({
-      async queryFn({ page, pageSize, sort, category, search }, { dispatch }) {
+      async queryFn(args, { dispatch }, _extra, baseQuery) {
+        const { page, pageSize, sort, category, search } = args;
+        if (usesServerPaging(args)) {
+          // A hidden category (e.g. a stale or hand-edited filter) is simply empty.
+          if (category && !isListedCategory(category)) return { data: toProductPage([], page, pageSize) };
+          const result = await baseQuery(buildCategoryPageUrl(args));
+          if (result.error) return { error: result.error };
+          const response = result.data as ApiProductPage;
+          return {
+            data: {
+              ...productsAdapter.setAll(productsAdapter.getInitialState(), response.products.map(toProduct)),
+              total: response.total,
+            },
+          };
+        }
+
         const request = dispatch(productSetApi.endpoints.getProductSet.initiate({ sort, category, search }));
         try {
           const result = await request;

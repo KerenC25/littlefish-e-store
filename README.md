@@ -117,14 +117,18 @@ src/
 - **Fonts:** Inter is self-hosted via `@fontsource`, Latin subset only.
 
 ### Advanced API integration (RTK Query)
-Server-side sorting (`sortBy`/`order`) and filtering (category, search), pagination, caching (per-argument cache entries, `keepUnusedDataFor`, tags, `refetchOnReconnect`), prefetching, and authenticated requests with transparent token refresh and retry.
+Server-side pagination (`limit`/`skip`) for category views, server-side sorting (`sortBy`/`order`) and filtering (category, search), caching (per-argument cache entries, `keepUnusedDataFor`, tags, `refetchOnReconnect`), prefetching, and authenticated requests with transparent token refresh and retry.
 
 **Shelf prices end in ,99.** DummyJSON prices are converted from USD at a fixed rate, which gives odd cents (R184,82). `usdToZarCents` keeps the whole Rand amount and sets the cents to 99 (R184,99); "was" prices follow the same rule and always stay above the current price. Totals, coupon discounts and VAT are still exact sums in integer cents, so they will not always end in ,99.
 
-**Groceries are not stocked.** DummyJSON cannot exclude a category, and dropping groceries from each server page (`limit`/`skip`) would leave short pages and a wrong product count. So the list asks the API for everything matching the current search, category and sort (`limit=0`, listing fields only, under 200 rows), removes hidden categories (`HIDDEN_CATEGORIES` in `src/shared/config.ts`), and cuts pages locally. It is two endpoints: `getProductSet` caches one request per filter combination, and `getProducts` builds each page from it, so changing page never hits the network. Groceries are also removed from categories, brands and hero stats, and their product pages show "not found". With a real catalogue API I would filter on the server and go back to server-side paging.
+**Groceries are not stocked.** The groceries category is listed in `HIDDEN_CATEGORIES` (`src/shared/config.ts`) and removed from the category filter, listings, search, brands and hero stats; a grocery product's page shows "not found". How paging works depends on the view:
+- **A category** (for example Beauty) is paged by the server with `limit`/`skip`, one cached request per page. A listed category can never contain groceries, so every page is complete and the server's total is exact.
+- **All products and search** can contain groceries, and DummyJSON cannot exclude a category. Dropping them from a server page would leave short pages and a wrong count, so these views fetch the matching set once (`limit=0`, listing fields only, under 200 rows), remove hidden categories, and cut pages locally. `getProductSet` caches one request per search and sort, and `getProducts` builds each page from it, so changing page does not hit the network.
+
+With a real catalogue API I would exclude categories on the server and page every view there.
 
 ### Testing
-**213 tests across 21 suites, covering 97.7% of lines and 85.3% of branches** (`npm run test:coverage`). The suites cover:
+**227 tests across 21 suites, covering 97.7% of lines and 85.2% of branches** (`npm run test:coverage`). The suites cover:
 - **Redux store:** reducers and selectors (`cartSlice`, `catalogSlice`), memoisation, and persistence through the real store and listener middleware, including tampered storage and storage that throws.
 - **Async actions:** RTK Query endpoints against a mocked `fetch` (normalisation, ZAR conversion, cache hits, per-page caching, error state). Also `baseQueryWithReauth` (401 → refresh → retry, failed refresh → logout and storage cleared) and the session-restore thunk.
 - **Component interactions (integration):** the real store, router, theme and contexts rendered together. Covers browsing, filtering, sorting, debounced search, add/increase/remove in the cart modal, focus returning after Escape, error/retry and empty states, the sign-in redirect and return, form validation with focus on the first invalid field, and successful, declined and 3-D Secure payments.
@@ -275,7 +279,10 @@ See [`CODE_REVIEW.md`](CODE_REVIEW.md).
 
 ## Challenges and trade-offs
 
-- **Search + category:** DummyJSON cannot combine them, so the reducer makes them mutually exclusive. Merging them client-side would have broken server-side pagination.
+- **Search + category:** DummyJSON cannot combine them, so the reducer makes them mutually exclusive rather than merging results in the browser.
+- **Hiding a category the API cannot exclude:** removing groceries from server pages would have left short pages and wrong totals. Category views keep true server paging (they can never contain groceries); only "all products" and search fetch the small matching set and page it locally. See "Advanced API integration".
+- **Odd converted prices:** a fixed USD to ZAR rate gives cents like R184,82. Shelf prices are rounded to a ,99 ending at the point of conversion, so every price on screen, in the cart and in orders agrees, while totals and VAT stay exact integer-cent sums.
+- **Two identity providers:** the demo login (DummyJSON) and real sign-up (Supabase Auth) issue different tokens. The session records its issuer so a token is never sent to the wrong API and each refresh token goes back only to its own provider.
 - **Virtualisation vs. a responsive grid:** react-window virtualises one axis. I virtualise rows and let CSS Grid lay out columns, with the column count taken from the measured width. The trade-off is that the grid scrolls inside its own container rather than with the window.
 - **Virtualisation vs. keyboard users:** rows outside the window are not in the DOM, so Tab cannot reach them until you scroll. Overscan and a focusable scroll container reduce the problem. For very small pages, plain rendering would be just as fast.
 - **Currency:** the API prices in USD. I convert at a fixed, documented rate rather than calling a live FX API, which keeps totals deterministic and testable.

@@ -3,7 +3,7 @@ import { createMemoryStorage } from '../../test/memoryStorage';
 import { mockFetch, on } from '../../test/mockFetch';
 import { apiProduct, productPage, sampleProducts } from '../../test/fixtures';
 import { initialCatalogState } from './catalogSlice';
-import { buildProductSetUrl, productSelectors, productsApi } from './productsApi';
+import { buildCategoryPageUrl, buildProductSetUrl, productSelectors, productsApi, usesServerPaging } from './productsApi';
 import type { ProductsQueryArgs } from './types';
 
 const args = (overrides: Partial<ProductsQueryArgs> = {}): ProductsQueryArgs => ({
@@ -126,7 +126,59 @@ describe('productsApi (store integration)', () => {
   });
 });
 
+describe('category views use server-side pagination', () => {
+  it('builds a limit/skip URL with sorting on the category resource', () => {
+    const url = new URL(
+      buildCategoryPageUrl(args({ category: 'home decoration', page: 3, pageSize: 12, sort: 'price-asc' })),
+      'https://x.test',
+    );
+    expect(url.pathname).toBe('/products/category/home%20decoration');
+    expect(url.searchParams.get('limit')).toBe('12');
+    expect(url.searchParams.get('skip')).toBe('24');
+    expect(url.searchParams.get('sortBy')).toBe('price');
+    expect(url.searchParams.get('order')).toBe('asc');
+  });
+
+  it('only pages on the server for a category without a search', () => {
+    expect(usesServerPaging({ category: 'beauty', search: '' })).toBe(true);
+    expect(usesServerPaging({ category: 'beauty', search: 'lip' })).toBe(false);
+    expect(usesServerPaging({ category: null, search: '' })).toBe(false);
+  });
+
+  it('requests one page per call, keeps the server total, and caches each page', async () => {
+    const { calls } = mockFetch(on('GET', '/products/category/beauty', () => productPage(sampleProducts, 40)));
+    const store = newStore();
+
+    const { data } = await store.dispatch(productsApi.endpoints.getProducts.initiate(args({ category: 'beauty', page: 2, pageSize: 12 })));
+    await store.dispatch(productsApi.endpoints.getProducts.initiate(args({ category: 'beauty', page: 3, pageSize: 12 })));
+    await store.dispatch(productsApi.endpoints.getProducts.initiate(args({ category: 'beauty', page: 2, pageSize: 12 })));
+
+    expect(data?.total).toBe(40);
+    expect(data?.ids).toEqual([1, 2, 3]);
+    expect(calls.map((c) => c.url.searchParams.get('skip'))).toEqual(['12', '24']);
+  });
+
+  it('exposes server errors for a category page', async () => {
+    mockFetch(on('GET', '/products/category/beauty', () => ({ status: 500, body: { message: 'Server sad' } })));
+    const store = newStore();
+
+    const result = await store.dispatch(productsApi.endpoints.getProducts.initiate(args({ category: 'beauty' })));
+
+    expect(result.error).toMatchObject({ status: 500 });
+  });
+});
+
 describe('groceries are not stocked', () => {
+  it('returns an empty page for the hidden category without calling the API', async () => {
+    const { calls } = mockFetch();
+    const store = newStore();
+
+    const { data } = await store.dispatch(productsApi.endpoints.getProducts.initiate(args({ category: 'groceries' })));
+
+    expect(data?.total).toBe(0);
+    expect(calls).toHaveLength(0);
+  });
+
   it('drops them from listings and counts them out of the total', async () => {
     mockFetch(on('GET', '/products', () => productPage([sampleProducts[0]!, chicken, sampleProducts[1]!, milk], 4)));
     const store = newStore();

@@ -1,6 +1,6 @@
 # Code review exercise
 
-> **Note:** The assessment brief asks for a critique of "a provided code snippet or pull request", but none came with the brief. Below is a review of a representative snippet, written the way I would leave it on a pull request. If Littlefish sends a specific snippet, I will review that one in this same format.
+A review of the pull request below, written the way I would leave it for a teammate: what works, what must change before merge, and why, with a suggested fix for each point.
 
 ## The pull request
 
