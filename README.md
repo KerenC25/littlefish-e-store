@@ -159,7 +159,8 @@ With a real catalogue API I would exclude categories on the server and page ever
 - **Forms:** labelled fields, `autocomplete` tokens, helper text tied to inputs via `aria-describedby`, an error summary, and focus moved to the first invalid field.
 - **Non-visual equivalents:** ratings and strikethrough prices have text alternatives.
 - **Visuals:** visible focus outlines, colours chosen for contrast, and all animation disabled under `prefers-reduced-motion`.
-- **Limits:** automated checks (`jsx-a11y` lint and axe) catch a subset of WCAG issues. Full conformance needs manual testing with screen readers (NVDA, VoiceOver) and keyboard-only use. I have not done that audit here.
+- **Manual testing:** I tested the live site using the keyboard only and with the NVDA screen reader on Windows: skip link, focus order and outlines, the cart dialog (focus trap, Escape, focus return), checkout and register error focus, headings and landmarks, the cart count, toast announcements and spoken "Was" prices. No issues found.
+- **Limits:** automated checks (`jsx-a11y` lint and axe) catch a subset of WCAG issues, and my manual pass covered the main journeys with one screen reader. Formal WCAG conformance would also need other assistive technologies (e.g. VoiceOver, JAWS) and an expert accessibility review.
 
 ### Design implementation
 - **Grid:** CSS Grid for the product rows, card internals (`grid-template-rows`), the toolbar (template changes per breakpoint), cart line items (`grid-template-areas`), checkout (two-column with a sticky summary) and the product detail page.
