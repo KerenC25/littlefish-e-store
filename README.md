@@ -295,3 +295,7 @@ See [`CODE_REVIEW.md`](CODE_REVIEW.md).
 - Run Playwright end-to-end tests against the real API, with an axe scan of every route.
 - Add a dark mode via a colour-scheme context.
 - Add a service worker for offline browsing of cached products.
+- Add a small backend (BFF) to move the trust boundary off the browser: refresh tokens in `httpOnly`, `Secure`, `SameSite` cookies; coupons validated and totals recomputed on the server; hidden categories excluded server-side so every view pages there; and order emails sent through a real provider with its key kept off the client.
+- Swap the simulated gateway for a real one (PayFast or Stripe) by writing one adapter behind the existing `PaymentGateway` interface.
+- Extend accessibility testing beyond keyboard and NVDA: VoiceOver and JAWS, plus an expert WCAG review.
+- Grow accounts: password reset, and order history stored per customer in Supabase instead of the browser.
